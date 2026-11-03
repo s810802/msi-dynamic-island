@@ -14,7 +14,7 @@ export const SERIES = {
   katana:   { name: "Katana",   group: "電競", desc: "主流電競,入門高效能的熱門選擇。", model: "Katana 17.3 吋(2026 春季更新)", specs: ["17.3 吋 WQHD 螢幕", "Core i7-14650HX", "RTX 5070 / 5060 / 5050 可選"], url: store("Katana") },
   vector:   { name: "Vector",   group: "電競", desc: "高效能電競,兼顧性能與平衡。", model: "", specs: [], url: store("Vector") },
   cyborg:   { name: "Cyborg",   group: "電競", desc: "個性化外型的入門電競款。", model: "Cyborg 15(2026 重新設計)", specs: ["入門電競外型改版", "完整規格請見官網"], url: store("Cyborg") },
-  creator:  { name: "Creator",  group: "創作", desc: "為剪輯、3D、設計打造,色彩準確且效能強。", model: "", specs: [], url: store("Creator") },
+  creator:  { name: "Creator",  group: "創作", desc: "為剪輯、3D、設計打造,色彩準確且效能強。", model: "Creator Z16HX Studio", specs: ["型號 B13VFTO-026TW", "完整規格請見官網"], url: store("Creator") },
   prestige: { name: "Prestige", group: "商務", desc: "輕薄質感商務筆電,出差與會議的好夥伴。", model: "Prestige 13 AI+ / 14 / 16", specs: ["Core Ultra Series 3 處理器", "13 AI+ 重 899 g;14 吋 1.32 kg;16 吋 1.59 kg", "Prestige 14/16 電池 81Wh", "Flip 款:2.8K 120Hz OLED 觸控螢幕"], url: store("Prestige") },
   modern:   { name: "Modern",   group: "日常", desc: "學習、辦公、追劇,日常使用高 CP 值。", model: "Modern 14S / 16S", specs: ["Core Ultra Series 3 處理器", "起始重量 1.3 kg、雙記憶體插槽", "USB-A、USB-C、HDMI、RJ-45、MicroSD"], url: store("Modern") },
 };
