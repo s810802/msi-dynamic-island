@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MSI 微星產品島</title>
+  <meta name="description" content="用 3D 小島探索 MSI 微星筆電:電競、創作、商務、日常四座島,128 種風格可選。">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Iansui&family=Klee+One:wght@400;600&display=swap">
+  <link rel="stylesheet" href="css/island.css">
+  <script type="importmap">{ "imports": { "three": "./js/vendor/three.module.js" } }</script>
+</head>
+<body>
+  <canvas id="scene" aria-label="MSI 產品島 3D 場景"></canvas>
+  <div id="labels" aria-hidden="false"></div>
+  <div id="tip" hidden></div>
+
+  <header class="bar">
+    <a class="brand" href="../">MSI 產品島</a>
+    <div class="bar-actions">
+      <button id="btnPlaces" aria-expanded="false" aria-controls="places">地點</button>
+      <button id="btnHome">回到全景</button>
+      <button id="btnStyle">風格 ✦ 128</button>
+      <button id="btnPause" aria-pressed="false">⏸ 暫停動態</button>
+      <a class="official" href="https://tw-store.msi.com/" target="_blank" rel="noopener">MSI 官方商店 ↗</a>
+      <a class="official" href="https://tw.msi.com/" target="_blank" rel="noopener">MSI 官網 ↗</a>
+    </div>
+  </header>
+
+  <nav id="places" aria-label="地點清單"><ul id="placeList"></ul></nav>
+
+  <p class="hint">拖曳旋轉・滾輪或雙指縮放・右鍵或雙指平移・點建築看產品</p>
+
+  <!-- 產品面板 -->
+  <div id="panel" class="overlay" hidden>
+    <section class="sheet" role="dialog" aria-modal="true" aria-labelledby="panelTitle">
+      <header><h2 id="panelTitle"></h2><button id="panelClose" aria-label="關閉">✕</button></header>
+      <div id="panelBody" class="sheet-body"></div>
+    </section>
+  </div>
+
+  <!-- 風格面板 -->
+  <div id="stylePanel" class="overlay" hidden>
+    <section class="sheet wide" role="dialog" aria-modal="true" aria-labelledby="styleTitle">
+      <header><h2 id="styleTitle">選擇風格</h2><button id="styleClose" aria-label="關閉">✕</button></header>
+      <div class="sheet-body">
+        <p class="lead" id="styleCurrent"></p>
+        <div class="seg" role="group" aria-label="亮色或暗色">
+          <button data-mode="light" aria-pressed="true">☀ 亮色 64 種</button>
+          <button data-mode="dark" aria-pressed="false">☾ 暗色 64 種</button>
+        </div>
+        <div id="styleFamilies" class="fams" role="group" aria-label="主題"></div>
+        <p class="muted" id="styleCount"></p>
+        <div id="styleGrid" class="tiles"></div>
+        <div class="custom">
+          <label>自訂主色 <input type="color" id="pickPrimary"></label>
+          <label>自訂點綴色 <input type="color" id="pickAccent"></label>
+          <button id="styleRandom">隨機</button>
+          <button id="styleReset">還原預設</button>
+        </div>
+        <div class="actions">
+          <button id="styleCancel">取消</button>
+          <button id="styleApply" class="primary">套用(記在這台裝置)</button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <footer class="credit">產品圖片來源:MSI 台灣官方商店 tw-store.msi.com,著作權屬 MSI 所有。本頁為學習練習用網站,非 MSI 官方。</footer>
+  <noscript>此頁需要 JavaScript 才能顯示 3D 小島。</noscript>
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>

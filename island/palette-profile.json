@@ -1,0 +1,13 @@
+{
+  "baseStyle": "penny-rounded-diorama-v1",
+  "mode": "personalized",
+  "status": "proposed",
+  "selectedPaletteId": "light-tech-1",
+  "evidence": [
+    {"source": "user-provided", "detail": "使用者要求亮色系網站、128 種風格可選(亮 64、暗 64)、手寫字體"},
+    {"source": "ai-inference", "detail": "預設採科技感・晨曦:以 MSI 慣用的紅黑為辨識色,淺色海面維持清爽;為設計提案,非品牌官方色票"}
+  ],
+  "designIntent": "128 種風格由 js/themes.js 以色相公式產生,3D 場景與介面共用同一份顏色;可選自訂主色與點綴色",
+  "roles": {"primary": "地標屋頂與按鈕", "accent": "地標點綴、旗幟與海龍角", "dark": "建築主體", "cream": "路面與基座"},
+  "storage": "此裝置的 localStorage(msi-island-theme-v1),不會同步給其他訪客"
+}

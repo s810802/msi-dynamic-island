@@ -1,0 +1,29 @@
+{
+  "version": 3,
+  "baseStyle": "penny-rounded-diorama-v1",
+  "status": "proposed",
+  "evidence": [{"source": "user-provided", "detail": "MSI 台灣官方商店的公開產品資料與圖片;品牌象徵為龍紋"}],
+  "designIntent": "電競系列共用起伏主高地,創作、商務、日常各自成島並以橋連接;海龍(呼應 MSI 龍紋)守護入口海域",
+  "paletteRef": "palette-profile.json",
+  "world": {
+    "rootId": "world-root", "layout": "coherent-archipelago",
+    "islands": [
+      {"id": "core", "generator": "js/runtime-kit/terrain.mjs", "zoneIds": ["titan", "raider", "stealth", "katana", "cyborg", "vector"]},
+      {"id": "creator", "generator": "js/runtime-kit/terrain.mjs", "zoneIds": ["creator"]},
+      {"id": "business", "generator": "js/runtime-kit/terrain.mjs", "zoneIds": ["prestige"]},
+      {"id": "daily", "generator": "js/runtime-kit/terrain.mjs", "zoneIds": ["modern"]}
+    ],
+    "connections": [
+      {"id": "core-creator", "fromIslandId": "core", "toIslandId": "creator", "kind": "bridge"},
+      {"id": "core-business", "fromIslandId": "core", "toIslandId": "business", "kind": "bridge"},
+      {"id": "core-daily", "fromIslandId": "core", "toIslandId": "daily", "kind": "bridge"}
+    ]
+  },
+  "guardian": {
+    "enabled": true, "status": "proposed", "rootId": "guardian-root", "generator": "js/landmarks.js#createGuardian",
+    "design": {"species": "海龍(取材 MSI 龍紋標誌的設計提案)"},
+    "anchor": {"space": "world", "environment": "sea", "position": [14, -0.24, 12.5], "waterLevel": -0.24},
+    "action": {"type": "open-panel", "targetId": "guide"},
+    "states": ["idle", "greeting", "interaction", "returning"]
+  }
+}

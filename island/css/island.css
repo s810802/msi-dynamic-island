@@ -1,0 +1,128 @@
+:root {
+  --bg1: #f3fbfa; --bg2: #d9eeed; --surface: #fffdf8; --text: #1f2430; --muted: #566070; --line: #e1e6ea;
+  --primary: #b02c2a; --on-primary: #fff; --accent: #f4c24f;
+  --font: "Iansui", "Klee One", "Ma Shan Zheng", "Kaiti TC", "DFKai-SB", "標楷體", cursive, sans-serif;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; overflow: hidden; }
+body { font-family: var(--font); color: var(--text); background: linear-gradient(var(--bg1), var(--bg2)); font-size: 17px; line-height: 1.6; }
+a { color: inherit; }
+button { font: inherit; color: inherit; cursor: pointer; }
+:focus-visible { outline: 3px solid var(--primary); outline-offset: 2px; }
+
+#scene { position: fixed; inset: 0; width: 100%; height: 100%; display: block; cursor: grab; touch-action: none; }
+#scene:active { cursor: grabbing; }
+
+/* 上方工具列 */
+.bar {
+  position: fixed; top: 10px; left: 10px; right: 10px; z-index: 20;
+  display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; justify-content: space-between;
+  pointer-events: none;
+}
+.bar > * { pointer-events: auto; }
+.brand {
+  text-decoration: none; font-size: 1.3rem; font-weight: 700; padding: 4px 16px; border-radius: 999px;
+  background: var(--surface); border: 2px solid var(--line); color: var(--primary);
+}
+.bar-actions { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; }
+.bar-actions button, .official {
+  background: var(--surface); border: 2px solid var(--line); border-radius: 999px;
+  padding: 4px 14px; font-size: .95rem; text-decoration: none; transition: transform .15s, border-color .15s;
+}
+.bar-actions button:hover, .official:hover { border-color: var(--primary); transform: translateY(-1px); }
+.official { color: var(--primary); }
+#btnStyle { background: var(--primary); color: var(--on-primary); border-color: var(--primary); }
+
+/* 地點清單 */
+#places {
+  position: fixed; left: 10px; top: 60px; z-index: 15; width: 220px; max-height: calc(100vh - 120px); overflow: auto;
+  background: var(--surface); border: 2px solid var(--line); border-radius: 18px; padding: 8px;
+  transform: translateX(-120%); transition: transform .3s;
+}
+#places.open { transform: none; }
+#places ul { list-style: none; display: grid; gap: 4px; }
+#places button { width: 100%; text-align: left; background: none; border: 0; border-radius: 12px; padding: 8px 12px; display: grid; }
+#places button:hover { background: var(--bg1); }
+#places small { color: var(--muted); font-size: .8rem; }
+
+/* 場景標籤 */
+#labels { position: fixed; inset: 0; z-index: 10; pointer-events: none; }
+.chip {
+  position: absolute; left: 0; top: 0; pointer-events: auto; white-space: nowrap;
+  background: var(--surface); border: 2px solid var(--primary); border-radius: 999px;
+  padding: 2px 14px; font-size: 1rem; font-weight: 600; color: var(--primary);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, .12);
+}
+.chip:hover { background: var(--primary); color: var(--on-primary); }
+.chip-guide { border-color: var(--accent); }
+#tip { position: fixed; left: 0; top: 0; z-index: 30; pointer-events: none; background: var(--text); color: var(--surface); padding: 2px 12px; border-radius: 999px; font-size: .9rem; }
+.hint { position: fixed; left: 50%; bottom: 34px; transform: translateX(-50%); z-index: 12; font-size: .85rem; color: var(--muted); background: color-mix(in srgb, var(--surface) 80%, transparent); padding: 2px 14px; border-radius: 999px; pointer-events: none; text-align: center; max-width: 92vw; }
+.credit { position: fixed; left: 0; right: 0; bottom: 4px; z-index: 12; text-align: center; font-size: .72rem; color: var(--muted); pointer-events: none; padding: 0 10px; }
+
+/* 面板 */
+.overlay { position: fixed; inset: 0; z-index: 40; background: rgba(10, 14, 20, .45); display: grid; place-items: center; padding: 14px; }
+.overlay[hidden] { display: none; }
+.sheet {
+  background: var(--surface); border-radius: 22px; border: 2px solid var(--line); width: min(1040px, 100%);
+  max-height: calc(100vh - 28px); display: flex; flex-direction: column; box-shadow: 0 20px 60px rgba(0, 0, 0, .3);
+}
+.sheet.wide { width: min(900px, 100%); }
+.sheet > header { display: flex; justify-content: space-between; align-items: center; padding: 12px 20px; border-bottom: 2px dashed var(--line); }
+.sheet h2 { font-size: 1.5rem; color: var(--primary); }
+.sheet > header button { background: none; border: 2px solid var(--line); border-radius: 50%; width: 38px; height: 38px; font-size: 1rem; }
+.sheet-body { padding: 16px 20px 20px; overflow: auto; }
+.lead { margin-bottom: 14px; }
+.muted { color: var(--muted); font-size: .9rem; }
+
+.cards { display: grid; grid-template-columns: repeat(var(--cols, 3), minmax(0, 1fr)); gap: 14px; align-items: start; }
+.card { display: block; text-decoration: none; background: var(--surface); border: 2px solid var(--line); border-radius: 18px; overflow: hidden; transition: transform .2s, border-color .2s, box-shadow .2s; }
+.card:hover, .card:focus-visible { transform: translateY(-3px); border-color: var(--primary); box-shadow: 0 10px 24px rgba(0, 0, 0, .12); }
+.card.hot { border-color: var(--primary); box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 25%, transparent); }
+.card img { display: block; width: 100%; height: auto; background: #fff; }
+.card-body { padding: 12px 14px 14px; }
+.tag { display: inline-block; font-size: .78rem; padding: 0 10px; border-radius: 999px; background: var(--primary); color: var(--on-primary); }
+.card h3 { font-size: 1.25rem; margin: 4px 0 2px; }
+.card p { color: var(--muted); font-size: .92rem; }
+.card strong { display: block; margin-top: 8px; font-size: .92rem; }
+.card ul { list-style: none; font-size: .88rem; color: var(--muted); }
+.card li::before { content: "• "; color: var(--primary); }
+.card .none { font-style: italic; margin-top: 6px; }
+.go { display: block; margin-top: 10px; color: var(--primary); font-weight: 600; }
+.links { margin-top: 16px; display: flex; flex-wrap: wrap; gap: 8px 18px; color: var(--primary); font-weight: 600; }
+.guide { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; }
+.guide-btn { background: var(--bg1); border: 2px solid var(--line); border-radius: 16px; padding: 12px 14px; text-align: left; display: grid; font-size: 1.15rem; }
+.guide-btn:hover { border-color: var(--primary); }
+.guide-btn small { color: var(--muted); font-size: .8rem; }
+
+/* 風格面板 */
+.seg { display: inline-flex; border: 2px solid var(--line); border-radius: 999px; overflow: hidden; margin-bottom: 10px; }
+.seg button { background: none; border: 0; padding: 4px 18px; }
+.seg button[aria-pressed="true"] { background: var(--primary); color: var(--on-primary); }
+.fams { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+.fams button { background: none; border: 2px solid var(--line); border-radius: 999px; padding: 0 12px; }
+.fams button[aria-pressed="true"] { border-color: var(--primary); color: var(--primary); font-weight: 600; }
+.tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)); gap: 8px; margin: 10px 0 14px; max-height: 38vh; overflow: auto; padding: 4px; }
+.tile { background: none; border: 2px solid var(--line); border-radius: 14px; padding: 6px; display: grid; gap: 4px; text-align: center; }
+.tile[aria-pressed="true"] { border-color: var(--primary); box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 25%, transparent); }
+.tile .sw { display: block; height: 38px; border-radius: 10px; }
+.tile .nm { font-size: .82rem; }
+.custom { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; margin-bottom: 14px; }
+.custom input[type=color] { width: 44px; height: 30px; border: 2px solid var(--line); border-radius: 8px; padding: 0; background: none; vertical-align: middle; }
+.custom button, .actions button { background: none; border: 2px solid var(--line); border-radius: 999px; padding: 2px 16px; }
+.actions { display: flex; justify-content: flex-end; gap: 10px; }
+.actions .primary { background: var(--primary); color: var(--on-primary); border-color: var(--primary); }
+
+@media (max-width: 760px) {
+  body { font-size: 16px; }
+  .cards { grid-template-columns: repeat(min(2, var(--cols, 2)), minmax(0, 1fr)); }
+  .hint { display: none; }
+  #places { top: 108px; }
+}
+@media (max-width: 480px) {
+  .cards { grid-template-columns: 1fr; }
+  .brand { font-size: 1.1rem; }
+  .official { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  * { transition-duration: .01ms !important; animation: none !important; }
+}
