@@ -41,8 +41,8 @@ a { color: inherit; }
 .sc.night .cloud { background: rgba(120, 134, 170, .85); }
 @keyframes drift { from { left: -40%; } to { left: 110%; } }
 
-.bg .cloud { width: 20%; height: 6%; opacity: .55; }
-.hero .cloud { width: 26%; height: 11%; }
+.bg .cloud { width: 16%; height: 5%; opacity: .3; }
+.hero .cloud { width: 20%; height: 8%; opacity: .45; }
 .card .cloud { width: 48%; height: 20%; }
 .rain i { position: absolute; top: -12%; width: 2px; height: 14%; border-radius: 2px; background: linear-gradient(transparent, #bfe3ff); animation: fall linear infinite; transform: rotate(10deg); }
 @keyframes fall { to { top: 112%; } }

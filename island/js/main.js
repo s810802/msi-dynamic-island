@@ -8,6 +8,8 @@ import { THEMES, FAMILY_LIST, DEFAULT_THEME_ID } from "./themes.js";
 import { makeMaterials, buildLandmark, buildTree, buildResident, createGuardian, buildLamp, buildAnimal, makeGlowTexture } from "./landmarks.js";
 import { createSky } from "./sky.js";
 import { createMusic } from "./music.js";
+import { createBillboard } from "./billboard.js";
+import { makeGait, stepGait } from "./gait.js";
 
 const $ = (s, el = document) => el.querySelector(s);
 const $$ = (s, el = document) => [...el.querySelectorAll(s)];
@@ -212,12 +214,13 @@ const residents = startNodes.map((node, i) => {
   const obj = buildResident(THREE, SHIRTS[i % SHIRTS.length], SKINS[i % SKINS.length], HAIRS[(i * 2) % HAIRS.length]);
   obj.scale.setScalar(1.15);
   world.add(obj);
-  const r = { obj, node, edge: null, dir: 1, s: 0, dwell: rand() * 3, speed: 0.8 + rand() * 0.6, last: -1, phase: rand() * 6 };
+  const r = { obj, node, edge: null, dir: 1, s: 0, dwell: rand() * 3, speed: 0.8 + rand() * 0.6, last: -1, phase: rand() * 6, gait: makeGait(), turn: 1, chat: false, faceTo: null };
   const p = NODES[node]; obj.position.set(p[0], surfaceY(p[0], p[1]) ?? 1, p[1]);
   return r;
 });
 function stepResident(r, dt) {
-  if (r.dwell > 0) { r.dwell -= dt; animateLimbs(r, 0); return; }
+  if (r.dwell > 0) { r.dwell -= dt; idleFace(r, dt); stepGait(r.obj, r.gait, dt, 0, { chat: r.chat }); return; }
+  r.chat = false; r.faceTo = null;
   if (r.edge === null) {
     const options = adj[r.node];
     const forward = options.filter(o => o.edge !== r.last);
@@ -225,7 +228,8 @@ function stepResident(r, dt) {
     r.edge = pick.edge; r.dir = pick.dir; r.s = 0; r.target = pick.to;
   }
   const e = edges[r.edge];
-  r.s += r.speed * dt;
+  stepGait(r.obj, r.gait, dt, r.speed * Math.min(1, Math.max(0.3, (e.len - r.s) / 0.9)) * r.turn);
+  r.s += r.gait.v * dt;
   const dist = r.dir > 0 ? Math.min(r.s, e.len) : Math.max(e.len - r.s, 0);
   let k = 1;
   while (k < e.cum.length - 1 && e.cum[k] < dist) k++;
@@ -236,22 +240,14 @@ function stepResident(r, dt) {
   if (hx || hz) {
     const want = Math.atan2(hx, hz);
     let d = want - r.obj.rotation.y; d = Math.atan2(Math.sin(d), Math.cos(d));
-    r.obj.rotation.y += d * Math.min(1, dt * 8);
+    r.obj.rotation.y += d * Math.min(1, dt * 6);
+    r.turn = Math.abs(d) > 0.9 ? 0.4 : 1;
   }
-  animateLimbs(r, r.speed);
-  if (r.s >= e.len) { r.node = r.target; r.last = r.edge; r.edge = null; r.dwell = 1.5 + rand() * 4; }
+  if (r.s >= e.len) { r.node = r.target; r.last = r.edge; r.edge = null; r.dwell = 1.5 + rand() * 4; startChat(r); }
 }
-function animateLimbs(r, speed) {
-  const { legL, legR, armL, armR } = r.obj.userData.limbs;
-  r.phase += speed * 0.18;
-  const sw = speed ? Math.sin(r.phase * 6) * 0.6 : 0;
-  legL.rotation.x = sw; legR.rotation.x = -sw; armL.rotation.x = -sw * 0.8; armR.rotation.x = sw * 0.8;
-}
-
 /* 看門獸 */
 const guardian = createGuardian(THREE, mats);
 guardian.root.position.set(...GUARDIAN_POS);
-guardian.root.rotation.y = -0.55;
 world.add(guardian.root);
 
 /* 路燈(夜晚亮起) */
@@ -300,7 +296,7 @@ function addRoamer(island, obj, speed, scale = 1) {
   obj.scale.setScalar(scale); world.add(obj);
   obj.position.set(spot[0], terrains[island].surfaceAt(spot[0], spot[1]) ?? 1, spot[1]);
   obj.rotation.y = rand() * 6;
-  roamers.push({ obj, island, speed, tx: null, tz: null, dwell: rand() * 3, phase: rand() * 6 });
+  roamers.push({ obj, island, speed, tx: null, tz: null, dwell: rand() * 3, phase: rand() * 6, gait: makeGait(), turn: 1, chat: false, faceTo: null });
 }
 [["core", 4], ["creator", 1], ["business", 1], ["daily", 1]].forEach(([isl, n]) => {
   for (let i = 0; i < n; i++) addRoamer(isl, buildResident(THREE, SHIRTS[(i + 3 + isl.length) % SHIRTS.length], SKINS[(i + 1) % SKINS.length], HAIRS[(i + 2) % HAIRS.length]), 0.55 + rand() * 0.4, 1.15);
@@ -310,13 +306,8 @@ function addRoamer(island, obj, speed, scale = 1) {
   for (let i = 0; i < n; i++) addRoamer(isl, buildAnimal(THREE, kind), sp * (0.8 + rand() * 0.4), sc);
 });
 function stepRoamer(r, dt) {
-  const limbs = r.obj.userData.limbs, legs = r.obj.userData.legs;
-  const swing = v => {
-    r.phase += v * 0.18; const sw = v ? Math.sin(r.phase * 6) * 0.6 : 0;
-    if (limbs) { limbs.legL.rotation.x = sw; limbs.legR.rotation.x = -sw; limbs.armL.rotation.x = -sw * 0.8; limbs.armR.rotation.x = sw * 0.8; }
-    if (legs) legs.forEach((l, i) => { l.rotation.x = (i % 2 ? -sw : sw) * 0.9; });
-  };
-  if (r.dwell > 0) { r.dwell -= dt; swing(0); return; }
+  if (r.dwell > 0) { r.dwell -= dt; idleFace(r, dt); stepGait(r.obj, r.gait, dt, 0, { chat: r.chat }); return; }
+  r.chat = false; r.faceTo = null;
   const p = r.obj.position;
   if (r.tx === null) {
     for (let i = 0; i < 20; i++) {
@@ -326,17 +317,39 @@ function stepRoamer(r, dt) {
     if (r.tx === null) { r.dwell = 1 + rand() * 2; return; }
   }
   const dx = r.tx - p.x, dz = r.tz - p.z, d = Math.hypot(dx, dz);
-  if (d < 0.12) { r.tx = null; r.dwell = 1.5 + rand() * 5; swing(0); return; }
-  const mv = Math.min(d, r.speed * dt);
+  if (d < 0.12) { r.tx = null; r.dwell = 1.5 + rand() * 5; startChat(r); stepGait(r.obj, r.gait, dt, 0); return; }
+  stepGait(r.obj, r.gait, dt, r.speed * Math.min(1, Math.max(0.3, d / 0.9)) * r.turn);
+  const mv = Math.min(d, r.gait.v * dt);
   p.x += dx / d * mv; p.z += dz / d * mv;
-  p.y = r.island ? (terrains[r.island].surfaceAt(p.x, p.z) ?? p.y) : p.y;
+  p.y = terrains[r.island].surfaceAt(p.x, p.z) ?? p.y;
   let da = Math.atan2(dx, dz) - r.obj.rotation.y; da = Math.atan2(Math.sin(da), Math.cos(da));
-  r.obj.rotation.y += da * Math.min(1, dt * 6);
-  swing(r.speed);
+  r.obj.rotation.y += da * Math.min(1, dt * 5);
+  r.turn = Math.abs(da) > 0.9 ? 0.4 : 1;
+}
+/* 停下來時:附近有別人就轉過去面對面聊天;否則自己東張西望 */
+function nearestPerson(r) {
+  let best = null, bd = 2.4;
+  for (const o of [...residents, ...roamers]) {
+    if (o === r || !o.obj.userData.limbs || (o.mode && o.mode !== "roam")) continue;
+    const d = Math.hypot(o.obj.position.x - r.obj.position.x, o.obj.position.z - r.obj.position.z);
+    if (d < bd) { bd = d; best = o; }
+  }
+  return best;
+}
+function startChat(r) {
+  const o = r.obj.userData.limbs ? nearestPerson(r) : null;
+  if (!o) return;
+  r.faceTo = Math.atan2(o.obj.position.x - r.obj.position.x, o.obj.position.z - r.obj.position.z); r.chat = true;
+  if (o.dwell !== undefined && o.dwell < 3) o.dwell = 3 + rand() * 2;   // 對方也停下來聊一下
+}
+function idleFace(r, dt) {
+  if (r.faceTo === null) return;
+  let da = r.faceTo - r.obj.rotation.y; da = Math.atan2(Math.sin(da), Math.cos(da));
+  r.obj.rotation.y += da * Math.min(1, dt * 3);
 }
 
 /* 海面上游動的鴨子 */
-const ducks = [[-14, 8, 3, 0.18], [8, -13, 3, -0.15], [24, 10, 3, 0.2], [-15, -8, 2.6, -0.17], [10, 19, 2.4, 0.16]].flatMap(([cx, cz, R, sp], g) =>
+const ducks = [[-6, -14, 3, 0.18], [8, -13, 3, -0.15], [24, 10, 3, 0.2], [-15, -8, 2.6, -0.17], [10, 19, 2.4, 0.16]].flatMap(([cx, cz, R, sp], g) =>
   Array.from({ length: 2 }, (_, i) => {
     const obj = buildAnimal(THREE, "duck"); obj.scale.setScalar(1.3); world.add(obj);
     return { obj, cx, cz, R: R + i * 0.6, sp, a: rand() * 6.28 + i * 1.5 };
@@ -349,6 +362,157 @@ function stepDucks(dt, t) {
     d.obj.rotation.y = Math.atan2(-Math.sin(d.a) * Math.sign(d.sp), Math.cos(d.a) * Math.sign(d.sp));
     d.obj.rotation.z = Math.sin(t * 2 + d.a * 3) * 0.05;
   }
+}
+
+/* ---------- 海龍接駁:海龍在島間巡游,沿岸停靠,載小人上下背 ---------- */
+const HARBORS = [
+  { name: "電競島(西南灣)", island: "core", stop: [-10.6, 8.0], shore: [-8.4, 4.5] },
+  { name: "日常島", island: "daily", stop: [-20.5, 9.8], shore: [-21, 6.2] },
+  { name: "商務島", island: "business", stop: [8.6, 16.8], shore: [4.4, 16.8] },
+  { name: "創作島", island: "creator", stop: [23, 8.6], shore: [23, 4.4] },
+  { name: "電競島(東南灣)", island: "core", stop: [10.8, 7.8], shore: [9.1, 4.4] },
+];
+const LEG_PTS = [
+  [[-10.6, 8.0], [-15, 9.4], [-20.5, 9.8]],
+  [[-20.5, 9.8], [-16, 17], [-8, 24.5], [2, 26], [9, 22], [8.6, 16.8]],
+  [[8.6, 16.8], [15, 12], [22, 10.5], [23, 8.6]],
+  [[23, 8.6], [17, 9], [10.8, 7.8]],
+];
+const legs = LEG_PTS.map(pts => {
+  const curve = new THREE.CatmullRomCurve3(pts.map(([x, z]) => new THREE.Vector3(x, 0, z)), false, "centripetal");
+  return { curve, len: curve.getLength() };
+});
+const people = roamers.filter(r => r.obj.userData.limbs);
+people.forEach(r => { r.mode = "roam"; });
+const SEATS = 3, SEAT_TMP = new THREE.Vector3(), HOP = 0.9;
+const ferry = { leg: 2, dir: 1, u: 0.3, state: "sail", timer: 0, stop: 2, heading: 0, riders: Array(SEATS).fill(null), speed: 1.7 };
+const tan = new THREE.Vector3(), pt = new THREE.Vector3();
+const headingOf = (leg, u, dir) => { legs[leg].curve.getTangentAt(Math.min(1, Math.max(0, u)), tan); return Math.atan2(-tan.z * dir, tan.x * dir); };
+ferry.heading = headingOf(ferry.leg, ferry.u, ferry.dir);
+
+function nextLegAfter(stopIdx) {
+  if (stopIdx === HARBORS.length - 1) ferry.dir = -1;
+  else if (stopIdx === 0) ferry.dir = 1;
+  ferry.leg = ferry.dir > 0 ? stopIdx : stopIdx - 1;
+  ferry.u = ferry.dir > 0 ? 0 : 1;
+}
+const seatPos = (i, out) => guardian.seat(i, out, SEATS);
+function setSitting(r, sit) {
+  const l = r.obj.userData.limbs;
+  l.legL.rotation.x = l.legR.rotation.x = sit ? -1.3 : 0;
+  l.armL.rotation.x = l.armR.rotation.x = sit ? -0.4 : 0;
+}
+function dock(stopIdx) {
+  ferry.state = "dock"; ferry.timer = 9; ferry.stop = stopIdx;
+  const h = HARBORS[stopIdx];
+  nextLegAfter(stopIdx);
+  // 下船:目的地到了就跳回岸上
+  ferry.riders.forEach((r, i) => {
+    if (r && r.dest === stopIdx) {
+      let sx = h.shore[0] + (rand() - 0.5) * 1.2, sz = h.shore[1] + (rand() - 0.5) * 1.2;
+      if (!terrains[h.island].contains(sx, sz)) { sx = h.shore[0]; sz = h.shore[1]; }
+      Object.assign(r, { mode: "hopOut", t: -i * 0.6, to: [sx, sz], island: h.island, seat: i });
+      ferry.riders[i] = null;
+    }
+  });
+  // 上船:同島的自由散步小人走到岸邊
+  const dist = r => Math.hypot(r.obj.position.x - h.shore[0], r.obj.position.z - h.shore[1]);
+  const free = people.filter(r => r.mode === "roam" && r.island === h.island).sort((a, b) => dist(a) - dist(b));
+  const seatsLeft = ferry.riders.filter(r => !r).length;
+  for (const r of free.slice(0, Math.min(2, seatsLeft))) {
+    r.dest = Math.min(HARBORS.length - 1, Math.max(0, stopIdx + ferry.dir * (1 + Math.floor(rand() * 2))));
+    if (r.dest === stopIdx) r.dest = stopIdx + (stopIdx === 0 ? 1 : -1);
+    Object.assign(r, { mode: "toShore", wait: [h.shore[0] + (rand() - 0.5), h.shore[1] + (rand() - 0.5)], harbor: stopIdx });
+  }
+}
+function updatePeople(dt) {
+  for (const r of people) {
+    const p = r.obj.position;
+    if (r.mode === "toShore") {
+      const [tx, tz] = r.wait, dx = tx - p.x, dz = tz - p.z, d = Math.hypot(dx, dz);
+      if (ferry.state !== "dock" || ferry.stop !== r.harbor) { r.mode = "roam"; r.tx = null; r.dwell = 1; continue; }
+      if (d > 0.25) {
+        const mv = Math.min(d, 1.3 * dt);
+        p.x += dx / d * mv; p.z += dz / d * mv; p.y = terrains[r.island].surfaceAt(p.x, p.z) ?? p.y;
+        let da = Math.atan2(dx, dz) - r.obj.rotation.y; da = Math.atan2(Math.sin(da), Math.cos(da));
+        r.obj.rotation.y += da * Math.min(1, dt * 8);
+        r.phase += 0.25;
+        const sw = Math.sin(r.phase * 6) * 0.6, l = r.obj.userData.limbs;
+        l.legL.rotation.x = sw; l.legR.rotation.x = -sw; l.armL.rotation.x = -sw * 0.8; l.armR.rotation.x = sw * 0.8;
+      } else {
+        const free = ferry.riders.findIndex(x => !x);
+        if (free >= 0) { ferry.riders[free] = r; Object.assign(r, { mode: "hopIn", t: 0, seat: free, from: p.clone() }); setSitting(r, false); }
+      }
+    } else if (r.mode === "hopIn") {
+      r.t += dt / HOP;
+      const u = Math.min(1, r.t);
+      seatPos(r.seat, SEAT_TMP);
+      p.lerpVectors(r.from, SEAT_TMP, u); p.y += Math.sin(Math.PI * u) * 1.3;
+      if (u >= 1) { r.mode = "ride"; setSitting(r, true); }
+    } else if (r.mode === "ride") {
+      seatPos(r.seat, SEAT_TMP); p.copy(SEAT_TMP);
+      r.obj.rotation.y = ferry.heading + Math.PI / 2;
+    } else if (r.mode === "hopOut") {
+      if (r.t < 0) {
+        r.t += dt; seatPos(r.seat, SEAT_TMP); p.copy(SEAT_TMP);
+        if (r.t >= 0) { r.from = p.clone(); r.t = 0; }
+        continue;
+      }
+      r.t += dt / HOP;
+      const u = Math.min(1, r.t), y = terrains[r.island].surfaceAt(r.to[0], r.to[1]) ?? 1;
+      pt.set(r.to[0], y, r.to[1]); p.lerpVectors(r.from, pt, u); p.y += Math.sin(Math.PI * u) * 1.3;
+      if (u >= 1) { r.mode = "roam"; r.tx = null; r.dwell = 1.5 + rand() * 2; setSitting(r, false); }
+    }
+  }
+}
+function updateFerry(dt) {
+  const L = legs[ferry.leg];
+  if (ferry.state === "sail") {
+    const travelled = ferry.dir > 0 ? ferry.u * L.len : (1 - ferry.u) * L.len, remain = L.len - travelled;
+    const f = Math.min(1, Math.max(0.2, Math.min(travelled + 0.6, remain) / 3.5));
+    ferry.u += ferry.dir * ferry.speed * f * dt / L.len;
+    if (ferry.u >= 1 || ferry.u <= 0) {
+      ferry.u = Math.min(1, Math.max(0, ferry.u));
+      dock(ferry.dir > 0 ? ferry.leg + 1 : ferry.leg);
+      return updateFerry(0);
+    }
+  } else {
+    ferry.timer -= dt;
+    if (ferry.timer <= 0) ferry.state = "sail";
+  }
+  legs[ferry.leg].curve.getPointAt(Math.min(1, Math.max(0, ferry.u)), pt);
+  guardian.root.position.set(pt.x, WATER, pt.z);
+  const want = headingOf(ferry.leg, ferry.u, ferry.dir);
+  let d = want - ferry.heading; d = Math.atan2(Math.sin(d), Math.cos(d));
+  ferry.heading += d * Math.min(1, dt * 1.6);
+  guardian.root.rotation.y = ferry.heading;
+}
+legs[ferry.leg].curve.getPointAt(ferry.u, pt);
+guardian.root.position.set(pt.x, WATER, pt.z);
+guardian.root.rotation.y = ferry.heading;
+
+
+/* ---------- 天氣 3D 看板:立在電競主島東南側,輪流顯示各城市的天氣 ---------- */
+const billboard = createBillboard(THREE, mats);
+{
+  const bx = 6.0, bz = 4.6, by = terrains.core.surfaceAt(bx, bz) ?? 1.2;
+  billboard.group.position.set(bx, by, bz);
+  billboard.group.rotation.y = 0.56;
+  world.add(billboard.group);
+  for (let i = trees.length - 1; i >= 0; i--) {
+    const t = trees[i];
+    if (Math.hypot(t.position.x - bx, t.position.z - bz) < 2.2) { world.remove(t); trees.splice(i, 1); }
+  }
+}
+function openWeather() {
+  const rows = billboard.cities.map(c => {
+    const d = billboard.data[c.id];
+    return d ? `<li><b>${c.name}</b><span>${Math.round(d.cur.main.temp)}°C</span><span>${d.cur.weather[0].description}</span><span>${Math.round(d.days[0].max)}° / ${Math.round(d.days[0].min)}°</span></li>`
+             : `<li><b>${c.name}</b><span>--</span><span>${billboard.state.status === "nokey" ? "尚未設定 API Key" : "取得中或暫時查不到"}</span><span></span></li>`;
+  }).join("");
+  openPanel("天氣看板", `<p class="lead">看板每 7 秒換一個城市。資料來自 OpenWeather,每 10 分鐘更新。</p>
+    <ul class="wx-list">${rows}</ul>
+    <p class="links"><a href="../weather/">進入完整天氣牆(22 個縣市+五天預報) →</a></p>`);
 }
 
 /* ---------- 風格 ---------- */
@@ -477,7 +641,7 @@ function openIsland(id, hotSeries) {
 }
 function openGuide() {
   guardian.nod();
-  openPanel("海龍嚮導", `<p class="lead">我是守護這片海的龍。四座島分別是電競主島、創作島、商務島與日常島,想去哪一座?</p>
+  openPanel("海龍嚮導", `<p class="lead">我是守護這片海的龍,每天在四座島之間游來游去,背上可以載小朋友喔!四座島分別是電競主島、創作島、商務島與日常島,想去哪一座?</p>
     <div class="guide">${ISLANDS.map(i => `<button class="guide-btn" data-island="${i.id}">${i.name}<small>${i.series.map(s => SERIES[s].name).join("・")}</small></button>`).join("")}</div>
     <p class="links"><a href="${OFFICIAL.main.url}" target="_blank" rel="noopener">${OFFICIAL.main.label} →</a>
     <a href="${OFFICIAL.store.url}" target="_blank" rel="noopener">${OFFICIAL.store.label} →</a>
@@ -497,7 +661,12 @@ const labels = ISLANDS.map(i => {
 const gl = document.createElement("button");
 gl.className = "chip chip-guide"; gl.textContent = "海龍嚮導"; gl.addEventListener("click", openGuide);
 labelBox.appendChild(gl);
-labels.push({ el: gl, anchor: new THREE.Vector3(GUARDIAN_POS[0] + 6, 4, GUARDIAN_POS[2] - 1) });
+const wxChip = document.createElement("button");
+wxChip.className = "chip chip-guide"; wxChip.textContent = "天氣看板"; wxChip.addEventListener("click", openWeather);
+labelBox.appendChild(wxChip);
+labels.push({ el: wxChip, anchor: new THREE.Vector3(9, 5, 7.5) });
+const guideAnchor = new THREE.Vector3(GUARDIAN_POS[0] + 6, 4, GUARDIAN_POS[2] - 1);
+labels.push({ el: gl, anchor: guideAnchor });
 function placeLabels() {
   const w = canvas.clientWidth, h = canvas.clientHeight, used = [];
   for (const l of labels) {
@@ -516,6 +685,9 @@ ISLANDS.forEach(i => {
   li.innerHTML = `<button data-island="${i.id}">${i.name}<small>${i.series.map(s => SERIES[s].name).join("・")}</small></button>`;
   li.firstChild.addEventListener("click", () => openIsland(i.id)); places.appendChild(li);
 });
+const wl = document.createElement("li");
+wl.innerHTML = `<button>天氣看板<small>各城市即時天氣</small></button>`;
+wl.firstChild.addEventListener("click", openWeather); places.appendChild(wl);
 const lg = document.createElement("li");
 lg.innerHTML = `<button>海龍嚮導<small>守護入口海域的巨龍</small></button>`;
 lg.firstChild.addEventListener("click", openGuide); places.appendChild(lg);
@@ -527,11 +699,11 @@ function pick(ev) {
   const r = canvas.getBoundingClientRect();
   ptr.set(((ev.clientX - r.left) / r.width) * 2 - 1, -((ev.clientY - r.top) / r.height) * 2 + 1);
   ray.setFromCamera(ptr, camera);
-  const hit = ray.intersectObjects([...landmarkList, guardian.root], true)[0];
+  const hit = ray.intersectObjects([...landmarkList, guardian.root, billboard.group], true)[0];
   if (!hit) return null;
   let o = hit.object;
-  while (o && !o.userData.seriesId && !o.userData.guardian) o = o.parent;
-  return o ? (o.userData.guardian ? { guardian: true } : { series: o.userData.seriesId }) : null;
+  while (o && !o.userData.seriesId && !o.userData.guardian && !o.userData.billboard) o = o.parent;
+  return o ? (o.userData.guardian ? { guardian: true } : o.userData.billboard ? { billboard: true } : { series: o.userData.seriesId }) : null;
 }
 let down = null;
 canvas.addEventListener("pointerdown", e => { down = { x: e.clientX, y: e.clientY }; });
@@ -541,6 +713,7 @@ canvas.addEventListener("pointerup", e => {
   const hit = pick(e);
   if (!hit) return;
   if (hit.guardian) return openGuide();
+  if (hit.billboard) return openWeather();
   const isl = ISLANDS.find(i => i.series.includes(hit.series));
   openIsland(isl.id, hit.series);
 });
@@ -548,7 +721,7 @@ canvas.addEventListener("pointermove", e => {
   if (e.buttons) { tip.hidden = true; return; }
   const hit = pick(e);
   canvas.style.cursor = hit ? "pointer" : "grab";
-  if (hit) { tip.hidden = false; tip.textContent = hit.guardian ? "海龍嚮導" : `MSI ${SERIES[hit.series].name}`; tip.style.transform = `translate(${e.clientX + 14}px, ${e.clientY + 14}px)`; }
+  if (hit) { tip.hidden = false; tip.textContent = hit.guardian ? "海龍嚮導" : hit.billboard ? "天氣看板" : `MSI ${SERIES[hit.series].name}`; tip.style.transform = `translate(${e.clientX + 14}px, ${e.clientY + 14}px)`; }
   else tip.hidden = true;
 });
 canvas.addEventListener("pointerleave", () => { tip.hidden = true; });
@@ -656,9 +829,11 @@ function frame(now) {
   if (!paused) {
     sim += dt;
     water.update(sim);
+    updateFerry(dt);
     guardian.update(sim);
+    updatePeople(dt);
     for (const r of residents) stepResident(r, dt);
-    for (const r of roamers) stepRoamer(r, dt);
+    for (const r of roamers) if (!r.mode || r.mode === "roam") stepRoamer(r, dt);
     stepDucks(dt, sim);
     sky.update(sim, dt, nightF);
   }
@@ -674,9 +849,11 @@ function frame(now) {
   controls.target.clamp(BOUNDS.min.clone().setY(-1), BOUNDS.max.clone().setY(3));
   controls.update();
   renderer.render(scene, camera);
+  billboard.update(now / 1000, nightF);
+  guideAnchor.set(guardian.root.position.x + 3, 5, guardian.root.position.z + 1);
   placeLabels();
   requestAnimationFrame(frame);
 }
 resize();
 requestAnimationFrame(frame);
-window.__island = { stepResident, stepRoamer, roamers, sky, ducks, lamps, mats, setTimeMode: m => { timeMode = m; }, nightFactor: () => nightF, scene, camera, controls, residents, edges, terrains, guardian, THEMES, applyTheme, openIsland };
+window.__island = { billboard, ferry, people, HARBORS, updateFerry, updatePeople, stepResident, stepRoamer, roamers, sky, ducks, lamps, mats, setTimeMode: m => { timeMode = m; }, nightFactor: () => nightF, scene, camera, controls, residents, edges, terrains, guardian, THEMES, applyTheme, openIsland };

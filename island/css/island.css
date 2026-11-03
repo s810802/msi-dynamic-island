@@ -133,3 +133,11 @@ button { font: inherit; color: inherit; cursor: pointer; }
 @media (prefers-reduced-motion: reduce) {
   * { transition-duration: .01ms !important; animation: none !important; }
 }
+
+.official.home { color: var(--text); }
+@media (max-width: 480px) { .official.home { display: inline-block; } }
+
+.wx-list { list-style: none; display: grid; gap: 8px; }
+.wx-list li { display: grid; grid-template-columns: 1.4fr .8fr 1.4fr 1fr; gap: 8px; align-items: center; background: var(--bg1); border: 2px solid var(--line); border-radius: 14px; padding: 8px 14px; }
+.wx-list li span:nth-child(2) { font-size: 1.3rem; color: var(--primary); font-weight: 700; }
+@media (max-width: 560px) { .wx-list li { grid-template-columns: 1fr 1fr; } }

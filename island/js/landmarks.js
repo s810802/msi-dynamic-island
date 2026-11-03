@@ -205,18 +205,22 @@ export function buildResident(THREE, shirt, skin, hair) {
   const mat = c => new THREE.MeshStandardMaterial({ color: c, roughness: 0.9, flatShading: true });
   const g = new THREE.Group();
   const part = (geo, color, x, y, z) => { const o = new THREE.Mesh(geo, mat(color)); o.position.set(x, y, z); o.castShadow = true; return o; };
-  g.add(part(new THREE.CapsuleGeometry(0.2, 0.32, 4, 8), shirt, 0, 0.72, 0));
-  g.add(part(new THREE.SphereGeometry(0.2, 10, 8), skin, 0, 1.2, 0));
-  const hairMesh = part(new THREE.SphereGeometry(0.21, 10, 8, 0, Math.PI * 2, 0, Math.PI * 0.55), hair, 0, 1.23, -0.01);
-  g.add(hairMesh);
-  const limb = (x, y, len, color) => {
+  const torso = new THREE.Group(); torso.position.y = 0; g.add(torso);
+  torso.add(part(new THREE.CapsuleGeometry(0.2, 0.32, 4, 8), shirt, 0, 0.72, 0));
+  const head = new THREE.Group(); head.position.set(0, 1.2, 0); torso.add(head);
+  head.add(part(new THREE.SphereGeometry(0.2, 10, 8), skin, 0, 0, 0));
+  head.add(part(new THREE.SphereGeometry(0.21, 10, 8, 0, Math.PI * 2, 0, Math.PI * 0.55), hair, 0, 0.03, -0.01));
+  head.add(part(new THREE.SphereGeometry(0.04, 6, 5), "#2b2622", -0.07, 0.02, 0.18));
+  head.add(part(new THREE.SphereGeometry(0.04, 6, 5), "#2b2622", 0.07, 0.02, 0.18));
+  const limb = (parent, x, y, len, color) => {
     const pivot = new THREE.Group(); pivot.position.set(x, y, 0);
-    const o = part(new THREE.CapsuleGeometry(0.065, len, 3, 6), color, 0, -len / 2, 0);
-    pivot.add(o); g.add(pivot); return pivot;
+    pivot.add(part(new THREE.CapsuleGeometry(0.065, len, 3, 6), color, 0, -len / 2, 0));
+    parent.add(pivot); return pivot;
   };
-  const legL = limb(-0.1, 0.5, 0.3, "#3b404c"), legR = limb(0.1, 0.5, 0.3, "#3b404c");
-  const armL = limb(-0.26, 0.95, 0.3, skin), armR = limb(0.26, 0.95, 0.3, skin);
+  const legL = limb(g, -0.1, 0.5, 0.3, "#3b404c"), legR = limb(g, 0.1, 0.5, 0.3, "#3b404c");
+  const armL = limb(torso, -0.26, 0.95, 0.3, skin), armR = limb(torso, 0.26, 0.95, 0.3, skin);
   g.userData.limbs = { legL, legR, armL, armR };
+  g.userData.torso = torso; g.userData.head = head;
   return g;
 }
 
@@ -261,7 +265,7 @@ export function createGuardian(THREE, m) {
   const base = [
     [-9, -4, 2], [-7, 0.7, 1.3], [-5, -2.4, 0.5], [-3, 0.5, -0.2], [-1.3, -2.2, 0], [0, 0.4, 0],
     [0.3, 3, 0], [0.7, 5.6, 0], [1.7, 7.9, 0.1], [2.5, 8.7, 0.1],
-  ].map(p => new THREE.Vector3(...p));
+  ].map(p => new THREE.Vector3(p[0] * 0.6, p[1], p[2] * 0.8));
   const curve = new THREE.CatmullRomCurve3(base.map(p => p.clone()), false, "catmullrom", 0.5);
   const tmp = new THREE.Vector3(), tan = new THREE.Vector3();
   let nod = 0;
@@ -297,5 +301,14 @@ export function createGuardian(THREE, m) {
   }
   update(0);
   root.userData = { guardian: true };
-  return { root, update, nod: () => { nod = 1; }, head };
+  // 背上的座位:沿身體曲線取點,回傳世界座標(接駁小人用)
+  const seatLocal = new THREE.Vector3();
+  function seat(i, out, seats = 3) {
+    const u = 0.1 + (i / Math.max(1, seats - 1)) * 0.28;
+    curve.getPointAt(u, seatLocal);
+    seatLocal.y += 1.05 - u * 0.4 + 0.05;
+    root.updateMatrixWorld(true);
+    return root.localToWorld(out.copy(seatLocal));
+  }
+  return { root, update, nod: () => { nod = 1; }, head, seat };
 }
