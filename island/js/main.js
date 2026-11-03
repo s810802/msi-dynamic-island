@@ -8,7 +8,6 @@ import { THEMES, FAMILY_LIST, DEFAULT_THEME_ID } from "./themes.js";
 import { makeMaterials, buildLandmark, buildTree, buildResident, createGuardian, buildLamp, buildAnimal, makeGlowTexture } from "./landmarks.js";
 import { createSky } from "./sky.js";
 import { createMusic } from "./music.js";
-import { createBillboard } from "./billboard.js";
 import { createWallBoard } from "./wallboard.js";
 import { makeGait, stepGait } from "./gait.js";
 
@@ -495,18 +494,6 @@ guardian.root.position.set(pt.x, WATER, pt.z);
 guardian.root.rotation.y = ferry.heading;
 
 
-/* ---------- 天氣 3D 看板:立在電競主島東南側,輪流顯示各城市的天氣 ---------- */
-const billboard = createBillboard(THREE, mats);
-{
-  const bx = 6.0, bz = 4.6, by = terrains.core.surfaceAt(bx, bz) ?? 1.2;
-  billboard.group.position.set(bx, by, bz);
-  billboard.group.rotation.y = 0.56;
-  world.add(billboard.group);
-  for (let i = trees.length - 1; i >= 0; i--) {
-    const t = trees[i];
-    if (Math.hypot(t.position.x - bx, t.position.z - bz) < 2.2) { world.remove(t); trees.splice(i, 1); }
-  }
-}
 const wxOverlay = $("#wxOverlay"), wxFrame = $("#wxFrame");
 /* 天氣牆看板:大面看板立在創作島北側,22 個縣市一次看完 */
 const wallboard = createWallBoard(THREE, mats);
@@ -520,8 +507,6 @@ const wallboard = createWallBoard(THREE, mats);
     if (Math.hypot(t.position.x - wx, t.position.z - wz) < 4.2) { world.remove(t); trees.splice(i, 1); }
   }
 }
-billboard.group.scale.setScalar(1.2);
-billboard.group.userData.label = "天氣顯示器(點一下放大)";
 function openWeather() {
   lastFocus = document.activeElement;
   if (!wxFrame.src) wxFrame.src = "../weather/?embed=1";
@@ -683,10 +668,6 @@ const wallChip = document.createElement("button");
 wallChip.className = "chip chip-guide"; wallChip.textContent = "天氣牆看板"; wallChip.addEventListener("click", openWeather);
 labelBox.appendChild(wallChip);
 labels.push({ el: wallChip, anchor: new THREE.Vector3(21, 7.6, -5) });
-const wxChip = document.createElement("button");
-wxChip.className = "chip chip-guide"; wxChip.textContent = "天氣顯示器"; wxChip.addEventListener("click", openWeather);
-labelBox.appendChild(wxChip);
-labels.push({ el: wxChip, anchor: new THREE.Vector3(9, 5, 7.5) });
 const guideAnchor = new THREE.Vector3(GUARDIAN_POS[0] + 6, 4, GUARDIAN_POS[2] - 1);
 labels.push({ el: gl, anchor: guideAnchor });
 function placeLabels() {
@@ -707,9 +688,6 @@ ISLANDS.forEach(i => {
   li.innerHTML = `<button data-island="${i.id}">${i.name}<small>${i.series.map(s => SERIES[s].name).join("・")}</small></button>`;
   li.firstChild.addEventListener("click", () => openIsland(i.id)); places.appendChild(li);
 });
-const wl = document.createElement("li");
-wl.innerHTML = `<button>天氣顯示器<small>台灣天氣牆</small></button>`;
-wl.firstChild.addEventListener("click", openWeather); places.appendChild(wl);
 const wl2 = document.createElement("li");
 wl2.innerHTML = `<button>天氣牆看板<small>22 縣市一次看</small></button>`;
 wl2.firstChild.addEventListener("click", openWeather); places.appendChild(wl2);
@@ -724,7 +702,7 @@ function pick(ev) {
   const r = canvas.getBoundingClientRect();
   ptr.set(((ev.clientX - r.left) / r.width) * 2 - 1, -((ev.clientY - r.top) / r.height) * 2 + 1);
   ray.setFromCamera(ptr, camera);
-  const hit = ray.intersectObjects([...landmarkList, guardian.root, billboard.group, wallboard.group], true)[0];
+  const hit = ray.intersectObjects([...landmarkList, guardian.root, wallboard.group], true)[0];
   if (!hit) return null;
   let o = hit.object;
   while (o && !o.userData.seriesId && !o.userData.guardian && !o.userData.billboard) o = o.parent;
@@ -874,7 +852,6 @@ function frame(now) {
   controls.target.clamp(BOUNDS.min.clone().setY(-1), BOUNDS.max.clone().setY(3));
   controls.update();
   renderer.render(scene, camera);
-  billboard.update(now / 1000, nightF);
   wallboard.update(now / 1000, nightF);
   guideAnchor.set(guardian.root.position.x + 3, 5, guardian.root.position.z + 1);
   placeLabels();
@@ -882,4 +859,4 @@ function frame(now) {
 }
 resize();
 requestAnimationFrame(frame);
-window.__island = { wallboard, billboard, ferry, people, HARBORS, updateFerry, updatePeople, stepResident, stepRoamer, roamers, sky, ducks, lamps, mats, setTimeMode: m => { timeMode = m; }, nightFactor: () => nightF, scene, camera, controls, residents, edges, terrains, guardian, THEMES, applyTheme, openIsland };
+window.__island = { wallboard, ferry, people, HARBORS, updateFerry, updatePeople, stepResident, stepRoamer, roamers, sky, ducks, lamps, mats, setTimeMode: m => { timeMode = m; }, nightFactor: () => nightF, scene, camera, controls, residents, edges, terrains, guardian, THEMES, applyTheme, openIsland };
