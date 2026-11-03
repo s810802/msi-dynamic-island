@@ -201,7 +201,7 @@ renderQuiz();
 /* ===== 聯絡表單 =====
    純靜態網站沒有伺服器,所以按送出會開啟訪客的郵件程式,內容已幫忙填好。
    把下面的信箱換成你要收信的地址。 */
-const CONTACT_EMAIL = "your-name@example.com";
+const CONTACT_EMAIL = "s810802@gmail.com";
 $("#contactForm").addEventListener("submit", e => {
   e.preventDefault();
   const f = e.target;
