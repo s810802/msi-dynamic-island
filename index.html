@@ -130,14 +130,22 @@
           <p>部分機種搭載 RGB 背光鍵盤,打字與遊戲手感兼顧。</p>
         </article>
       </div>
-      <p class="note">※ 實際規格依機種而異,請以 MSI 官方網站為準。</p>
+      <p class="note">※ 實際規格依機種而異,請以 MSI 官方網站為準。系列卡片的規格整理自 2026 年 CES、Computex 與春季更新的公開報導。</p>
     </section>
 
     <!-- ============ 聯絡 ============ -->
     <section class="section alt" id="contact" data-name="聯絡">
       <h2>想了解更多?</h2>
       <p class="section-sub">前往 MSI 官方網站查看最新機種與規格。</p>
-      <a class="btn btn-primary" href="https://tw.msi.com/" target="_blank" rel="noopener">前往 MSI 台灣官網</a>
+      <form class="contact-form" id="contactForm">
+        <label>姓名<input name="name" required autocomplete="name"></label>
+        <label>聯絡信箱<input name="email" type="email" required autocomplete="email"></label>
+        <label>感興趣的系列<select name="topic" id="topic"></select></label>
+        <label>想問的問題<textarea name="message" rows="4" required></textarea></label>
+        <button class="btn btn-primary" type="submit">送出詢問</button>
+        <p class="form-hint" id="formHint">按下送出後,會開啟你的郵件程式並帶入內容。</p>
+      </form>
+      <p class="official-link"><a href="https://tw.msi.com/" target="_blank" rel="noopener">或前往 MSI 台灣官網 →</a></p>
     </section>
   </main>
 

@@ -11,6 +11,19 @@ const SERIES = [
   { id: "modern",  name: "Modern",  group: "日常", desc: "學習、辦公、追劇,日常使用高 CP 值。",   score: { 效能: 2, 便攜: 4, 創作: 2, 價格: 5 } },
 ];
 
+// 代表機種與規格:僅收錄公開報導(CES / Computex 2026、2026 春季更新)有明確寫出的數據
+// 未找到可靠資料的欄位留空,卡片會顯示「規格請見官網」。上線前請再對照 MSI 官網。
+const SPECS = {
+  titan:    { model: "Titan 18 HX Dragon Edition Draco Epic", lines: ["40 週年旗艦機種", "完整規格請見官網"] },
+  raider:   { model: "Raider 16 Max HX", lines: ["Ryzen 9 9955HX3D(16 核 32 緒)", "RTX 5090 Laptop GPU 175W", "整機功耗最高約 300W"] },
+  vector:   { model: "", lines: [] },
+  katana:   { model: "Katana 17.3 吋(2026 春季更新)", lines: ["17.3 吋 WQHD 螢幕", "Core i7-14650HX", "RTX 5070 / 5060 / 5050 可選"] },
+  cyborg:   { model: "Cyborg 15(2026 重新設計)", lines: ["入門電競外型改版", "完整規格請見官網"] },
+  creator:  { model: "", lines: [] },
+  prestige: { model: "Prestige 13 AI+ / 14 / 16", lines: ["Core Ultra Series 3 處理器", "13 AI+ 重 899 g;14 吋 1.32 kg;16 吋 1.59 kg", "Prestige 14/16 電池 81Wh", "Flip 款:2.8K 120Hz OLED 觸控螢幕"] },
+  modern:   { model: "Modern 14S / 16S", lines: ["Core Ultra Series 3 處理器", "起始重量 1.3 kg、雙記憶體插槽", "USB-A、USB-C、HDMI、RJ-45、MicroSD"] },
+};
+
 const NOTICES = [
   "🔥 新品上市:快來看看最新系列",
   "🎓 學生專屬優惠請洽官方通路",
@@ -132,6 +145,12 @@ cardsBox.innerHTML = SERIES.map(s => `
     <span class="tag">${s.group}</span>
     <h3>${s.name}</h3>
     <p>${s.desc}</p>
+    <div class="specs">
+      ${SPECS[s.id].model ? `<strong>${SPECS[s.id].model}</strong>` : ""}
+      ${SPECS[s.id].lines.length
+        ? `<ul>${SPECS[s.id].lines.map(l => `<li>${l}</li>`).join("")}</ul>`
+        : `<p class="spec-none">規格請見官網</p>`}
+    </div>
   </article>`).join("");
 
 function focusCard(id) {
@@ -178,6 +197,20 @@ function renderResult() {
   $("#quizRetry").addEventListener("click", () => { step = 0; scoreMap = {}; picks = []; renderQuiz(); });
 }
 renderQuiz();
+
+/* ===== 聯絡表單 =====
+   純靜態網站沒有伺服器,所以按送出會開啟訪客的郵件程式,內容已幫忙填好。
+   把下面的信箱換成你要收信的地址。 */
+const CONTACT_EMAIL = "your-name@example.com";
+$("#contactForm").addEventListener("submit", e => {
+  e.preventDefault();
+  const f = e.target;
+  const subject = `[MSI 網站詢問] ${f.topic.value}`;
+  const body = `姓名:${f.name.value}\n聯絡信箱:${f.email.value}\n感興趣的系列:${f.topic.value}\n\n${f.message.value}`;
+  location.href = `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  $("#formHint").textContent = "已開啟你的郵件程式,請在裡面按「傳送」完成寄出。";
+});
+$("#topic").innerHTML = ["不確定,想請你推薦", ...SERIES.map(s => s.name)].map(t => `<option>${t}</option>`).join("");
 
 /* ===== 捲動淡入 ===== */
 const revealObs = new IntersectionObserver(es => es.forEach(e => {
