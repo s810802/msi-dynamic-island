@@ -34,7 +34,7 @@
 
     <section class="wallbar">
       <div id="regions" class="regions" role="group" aria-label="地區篩選"></div>
-      <label class="search"><span class="sr">搜尋縣市</span><input id="q" type="search" placeholder="搜尋縣市,例如:高雄"></label>
+      <div class="search"><label class="sr" for="q">搜尋城市</label><input id="q" type="search" autocomplete="off" role="combobox" aria-controls="sugg" aria-expanded="false" placeholder="搜尋城市,例如:高雄、Taipei"><ul id="sugg" class="sugg" role="listbox" hidden></ul></div>
       <button id="btnRefresh" class="refresh">↻ 重新整理</button>
     </section>
     <p id="status" class="status" role="status">準備中…</p>
@@ -44,9 +44,10 @@
     <p id="empty" class="empty" hidden>找不到符合的縣市。</p>
   </main>
 
+  <details class="credits-box"><summary>城市照片來源與授權</summary><ul id="credits" class="credits"></ul></details>
   <footer class="foot">天氣資料來源:<a href="https://openweathermap.org/" target="_blank" rel="noopener">OpenWeather</a>・每 10 分鐘自動更新・僅供參考,正式警特報請看<a href="https://www.cwa.gov.tw/" target="_blank" rel="noopener">中央氣象署</a></footer>
 
-  <script type="module" src="js/weather.js"></script>
+  <script type="module" src="js/weather.js?v=3"></script>
   <noscript>此頁需要 JavaScript 才能顯示天氣。</noscript>
 </body>
 </html>

@@ -1,5 +1,5 @@
-import { CITIES, REGIONS } from "./cities.js";
-import { kindOf, icon, scene, KIND_LABEL } from "./scenes.js";
+import { CITIES, REGIONS } from "./cities.js?v=3";
+import { kindOf, icon } from "./scenes.js?v=3";
 
 if (location.search.includes("embed")) document.documentElement.classList.add("embed");
 const $ = (s, el = document) => el.querySelector(s);
@@ -79,7 +79,7 @@ const state = { region: "全部", q: "", selected: CITIES[0], current: {}, error
 
 const wall = $("#wall");
 wall.innerHTML = CITIES.map(c => `<button class="card" data-id="${c.id}" data-region="${c.region}" aria-label="查看${c.name}的天氣">
-  <span class="card-scene"></span>
+  <span class="card-scene" style="background-image:url('img/thumb/${c.id}.jpg')"></span>
   <span class="card-body">
     <span class="card-top"><b class="card-name">${c.name}</b><span class="card-region">${c.region}</span></span>
     <span class="card-main"><span class="card-ic"></span><span class="card-temp">--<small>°C</small></span></span>
@@ -91,18 +91,39 @@ $("#regions").innerHTML = REGIONS.map(r => `<button data-region="${r}" aria-pres
 function filterWall() {
   for (const el of $$(".card", wall)) {
     const c = CITIES.find(x => x.id === el.dataset.id);
-    el.hidden = !((state.region === "全部" || c.region === state.region) && (!state.q || c.name.includes(state.q)));
+    el.hidden = !((state.region === "全部" || c.region === state.region) && (!state.q || norm(c.name).includes(state.q) || c.en.toLowerCase().includes(state.q) || c.region.includes(state.q)));
   }
   $("#empty").hidden = $$(".card:not([hidden])", wall).length > 0;
 }
 $("#regions").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; state.region = b.dataset.region; $$("#regions button").forEach(x => x.setAttribute("aria-pressed", String(x === b))); filterWall(); });
-$("#q").addEventListener("input", e => { state.q = e.target.value.trim().replace(/臺/g, "台"); filterWall(); });
+const norm = v => v.trim().toLowerCase().replace(/臺/g, "台");
+const sugg = $("#sugg");
+function matches(q) {
+  q = norm(q); if (!q) return [];
+  return CITIES.filter(c => norm(c.name).includes(q) || c.en.toLowerCase().includes(q) || c.region.includes(q));
+}
+function renderSugg() {
+  const list = matches($("#q").value).slice(0, 8);
+  sugg.hidden = !list.length;
+  sugg.innerHTML = list.map((c, i) => `<li role="option" data-id="${c.id}" aria-selected="${i === 0}"><img src="img/thumb/${c.id}.jpg" alt="" width="44" height="30"><b>${c.name}</b><small>${c.en}</small></li>`).join("");
+}
+function chooseCity(c) {
+  state.selected = c; state.q = ""; $("#q").value = ""; sugg.hidden = true; filterWall();
+  renderHero();
+  $("#hero").scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
+}
+$("#q").addEventListener("input", e => { state.q = norm(e.target.value); filterWall(); renderSugg(); });
+$("#q").addEventListener("keydown", e => {
+  if (e.key === "Enter") { const c = matches($("#q").value)[0]; if (c) { e.preventDefault(); chooseCity(c); } }
+  if (e.key === "Escape") { sugg.hidden = true; }
+});
+sugg.addEventListener("mousedown", e => { const li = e.target.closest("li"); if (li) { e.preventDefault(); chooseCity(CITIES.find(c => c.id === li.dataset.id)); } });
+$("#q").addEventListener("blur", () => setTimeout(() => { sugg.hidden = true; }, 120));
 
 function paintCard(city) {
   const el = $(`.card[data-id="${city.id}"]`), c = state.current[city.id], err = state.errors[city.id];
   if (!c) { if (err) { $(".card-desc", el).textContent = err.code === "nokey" ? "需要 API Key" : "暫時查不到"; } return; }
   const kind = kindOf(c.weather[0].id), night = isNight(c);
-  $(".card-scene", el).innerHTML = scene(kind, night, false);
   $(".card-ic", el).innerHTML = icon(kind, night, 46);
   $(".card-temp", el).innerHTML = `${round(c.main.temp)}<small>°C</small>`;
   $(".card-desc", el).textContent = c.weather[0].description;
@@ -144,10 +165,9 @@ async function renderHero(force = false) {
   const city = state.selected, c = state.current[city.id];
   if (!c) return;
   const kind = kindOf(c.weather[0].id), night = isNight(c), tz = c.timezone;
-  $("#bg").innerHTML = scene(kind, night, true);
-  document.body.dataset.kind = kind; document.body.dataset.night = night ? "1" : "0";
+  setBg(city);
   const now = local(Math.floor(Date.now() / 1000), tz);
-  $("#hero").innerHTML = `<div class="hero-scene">${scene(kind, night, true)}</div>
+  $("#hero").innerHTML = `<div class="hero-photo" style="background-image:url('img/${city.id}.jpg')" role="img" aria-label="${esc(city.name)}的城市風景"></div><div class="hero-shade"></div>
     <div class="hero-body">
       <div class="hero-left">
         <p class="hero-city">${esc(city.name)}<span>${esc(city.region)}</span></p>
@@ -165,7 +185,10 @@ async function renderHero(force = false) {
         <div><dt>🌅 日出 / 日落</dt><dd>${hm(c.sys.sunrise, tz)}<small>/ ${hm(c.sys.sunset, tz)}</small></dd></div>
       </dl>
     </div>
-    <div class="forecast" id="forecast"><p class="fc-loading">載入未來五天預報…</p></div>`;
+    <div class="forecast" id="forecast"><p class="fc-loading">載入未來五天預報…</p></div>
+    <section class="mapbox"><h3>${esc(city.name)}的 Google 地圖<a href="https://www.google.com/maps/search/?api=1&query=${city.lat},${city.lon}" target="_blank" rel="noopener">在 Google 地圖開啟 ↗</a></h3>
+      <iframe title="${esc(city.name)} Google 地圖" loading="lazy" referrerpolicy="no-referrer-when-downgrade" allowfullscreen
+        src="https://www.google.com/maps?q=${city.lat},${city.lon}&z=11&hl=zh-TW&output=embed"></iframe></section>`;
   $$(".card").forEach(el => el.classList.toggle("is-selected", el.dataset.id === city.id));
   try {
     const f = await owm("forecast", city, force);
@@ -190,8 +213,65 @@ function forecastHtml(days, f) {
       <span class="day-lo" style="color:${tempColor(d.min)}">${round(d.min)}°</span>
       <span class="day-pop">☔ ${round(d.pop * 100)}%</span></li>`;
   }).join("");
-  return `<h3>未來五天氣溫預報</h3><ul class="days">${cards}</ul>${chartSvg(f)}`;
+  return `<h3>未來五天氣溫預報</h3><ul class="days">${cards}</ul>
+    <div class="charts">
+      <figure><figcaption>每日最高 / 最低溫</figcaption>${hiloChart(days)}</figure>
+      <figure><figcaption>降雨機率(每 3 小時)</figcaption>${rainChart(f)}</figure>
+    </div>
+    <figure class="wide"><figcaption>每 3 小時氣溫曲線</figcaption>${chartSvg(f)}</figure>`;
 }
+
+/* 每日最高 / 最低溫:兩條線 + 之間的色帶 */
+function hiloChart(days) {
+  const W = 420, H = 230, L = 34, R = 16, T = 28, B = 34;
+  const lo = Math.floor(Math.min(...days.map(d => d.min)) - 2), hi = Math.ceil(Math.max(...days.map(d => d.max)) + 2);
+  const x = i => L + (W - L - R) * (i + 0.5) / days.length, y = t => T + (H - T - B) * (1 - (t - lo) / (hi - lo));
+  const label = (d, i) => i === 0 ? "今天" : i === 1 ? "明天" : `週${WEEK[d.wd]}`;
+  const line = k => days.map((d, i) => `${i ? "L" : "M"}${x(i)} ${y(d[k])}`).join(" ");
+  const band = days.map((d, i) => `${i ? "L" : "M"}${x(i)} ${y(d.max)}`).join(" ") + " " + [...days].reverse().map((d, i) => `L${x(days.length - 1 - i)} ${y(d.min)}`).join(" ") + " Z";
+  const grid = Array.from({ length: 4 }, (_, k) => { const t = lo + (hi - lo) * k / 3; return `<line x1="${L}" x2="${W - R}" y1="${y(t)}" y2="${y(t)}" class="grid"/><text x="${L - 6}" y="${y(t) + 4}" text-anchor="end">${round(t)}°</text>`; }).join("");
+  const dots = days.map((d, i) => `<circle cx="${x(i)}" cy="${y(d.max)}" r="5" fill="#ffb25a" stroke="#fff" stroke-width="2"/><text x="${x(i)}" y="${y(d.max) - 10}" text-anchor="middle" class="mk">${round(d.max)}°</text>
+    <circle cx="${x(i)}" cy="${y(d.min)}" r="5" fill="#7cc4ff" stroke="#fff" stroke-width="2"/><text x="${x(i)}" y="${y(d.min) + 20}" text-anchor="middle" class="mk">${round(d.min)}°</text>
+    <text x="${x(i)}" y="${H - 8}" text-anchor="middle">${label(d, i)}</text>`).join("");
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="未來五天每日最高與最低溫">${grid}
+    <path d="${band}" fill="rgba(255,200,120,.2)"/><path d="${line("max")}" class="line hi"/><path d="${line("min")}" class="line lo"/>${dots}</svg>`;
+}
+
+/* 降雨機率:每 3 小時一根長條,依機率上色 */
+function rainChart(f) {
+  const tz = f.city.timezone, pts = f.list.map(it => ({ p: it.pop || 0, d: local(it.dt, tz) }));
+  const W = 420, H = 230, L = 34, R = 12, T = 28, B = 34, bw = (W - L - R) / pts.length;
+  const y = p => T + (H - T - B) * (1 - p);
+  const color = p => `rgba(${Math.round(120 - p * 70)},${Math.round(190 - p * 60)},255,${0.45 + p * 0.5})`;
+  const grid = [0, 0.5, 1].map(p => `<line x1="${L}" x2="${W - R}" y1="${y(p)}" y2="${y(p)}" class="grid"/><text x="${L - 6}" y="${y(p) + 4}" text-anchor="end">${p * 100}%</text>`).join("");
+  const bars = pts.map((p, i) => `<rect x="${L + i * bw + 1}" y="${y(p.p)}" width="${Math.max(2, bw - 2)}" height="${Math.max(1.5, (H - T - B) * p.p)}" rx="2" fill="${color(p.p)}"><title>${p.d.getUTCMonth() + 1}/${p.d.getUTCDate()} ${pad(p.d.getUTCHours())}:00 降雨機率 ${round(p.p * 100)}%</title></rect>`).join("");
+  const ticks = pts.map((p, i) => p.d.getUTCHours() === 0 || i === 0 ? `<line x1="${L + i * bw}" x2="${L + i * bw}" y1="${T}" y2="${H - B}" class="day-line"/><text x="${L + i * bw + 3}" y="${H - 8}">${i === 0 ? "現在" : `${p.d.getUTCMonth() + 1}/${p.d.getUTCDate()}`}</text>` : "").join("");
+  const peak = pts.reduce((a, p, i) => p.p > pts[a].p ? i : a, 0);
+  const mark = pts[peak].p > 0 ? `<text x="${L + peak * bw + bw / 2}" y="${y(pts[peak].p) - 7}" text-anchor="middle" class="mk">${round(pts[peak].p * 100)}%</text>` : "";
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="未來五天每三小時降雨機率">${grid}${ticks}${bars}${mark}</svg>`;
+}
+
+/* 背景:目前城市的照片,換城市時淡入淡出 */
+let bgFront = null;
+function setBg(city) {
+  const bg = $("#bg");
+  if (bg.dataset.city === city.id) return;
+  bg.dataset.city = city.id;
+  const layer = document.createElement("div");
+  layer.className = "bg-photo"; layer.style.backgroundImage = `url('img/${city.id}.jpg')`;
+  bg.appendChild(layer);
+  requestAnimationFrame(() => layer.classList.add("in"));
+  const old = bgFront; bgFront = layer;
+  if (old) setTimeout(() => old.remove(), 900);
+}
+
+/* 圖片來源與授權(Wikimedia Commons,依授權標示作者) */
+fetch("img/credits.json").then(r => r.json()).then(cr => {
+  $("#credits").innerHTML = CITIES.map(c => {
+    const x = cr[c.id]; if (!x) return "";
+    return `<li><b>${esc(c.name)}</b>:${esc(x.artist || "作者請見原頁")}・<a href="${esc(x.licenseUrl || x.page)}" target="_blank" rel="noopener">${esc(x.license)}</a>・<a href="${esc(x.page)}" target="_blank" rel="noopener">原圖頁面</a></li>`;
+  }).join("");
+}).catch(() => {});
 
 /* 3 小時一點的氣溫曲線 */
 function chartSvg(f) {

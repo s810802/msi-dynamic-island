@@ -159,3 +159,43 @@ main { width: min(1180px, 100%); margin: 0 auto; padding: 8px 16px 40px; }
 
 .embed .back { display: none; }
 .embed .top { padding-top: 12px; }
+
+/* ---------- 城市照片(固定不變) ---------- */
+.bg::after { background: linear-gradient(180deg, rgba(8, 16, 40, .35), rgba(8, 16, 40, .55)); }
+.bg-photo { position: absolute; inset: 0; background-size: cover; background-position: center; opacity: 0; transition: opacity .9s ease; }
+.bg-photo.in { opacity: 1; }
+.hero-photo { position: absolute; inset: 0; background-size: cover; background-position: center; }
+.hero-shade { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(8, 16, 40, .62) 0%, rgba(8, 16, 40, .3) 55%, rgba(8, 16, 40, .15) 100%), linear-gradient(180deg, rgba(0, 0, 0, 0) 40%, rgba(8, 16, 40, .55) 100%); }
+.card { background: #2a3a5c; }
+.card-scene { background-position: center; background-size: cover; background-repeat: no-repeat; transition: transform .6s; }
+.card:hover .card-scene { transform: scale(1.06); }
+.card-scene::after { background: linear-gradient(180deg, rgba(0, 0, 0, .18), rgba(0, 0, 0, .55)); }
+
+/* 搜尋建議 */
+.search { position: relative; }
+.sugg { position: absolute; z-index: 20; left: 0; right: 0; top: calc(100% + 6px); list-style: none; background: rgba(20, 30, 55, .96); border: 1px solid var(--glass-line); border-radius: 18px; padding: 6px; backdrop-filter: blur(12px); box-shadow: 0 14px 30px rgba(0, 0, 0, .4); }
+.sugg[hidden] { display: none; }
+.sugg li { display: flex; align-items: center; gap: 10px; padding: 5px 10px; border-radius: 12px; cursor: pointer; }
+.sugg li:hover, .sugg li[aria-selected="true"] { background: rgba(255, 255, 255, .16); }
+.sugg img { border-radius: 8px; object-fit: cover; }
+.sugg small { opacity: .75; margin-left: auto; }
+
+/* 圖表 */
+.charts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 12px; }
+.charts figure, .forecast figure.wide { background: rgba(255, 255, 255, .1); border: 1px solid var(--glass-line); border-radius: 18px; padding: 10px 12px 6px; }
+.forecast figure.wide { margin-top: 12px; }
+figcaption { font-size: .95rem; font-weight: 700; }
+.chart .line.hi { stroke: #ffb25a; }
+.chart .line.lo { stroke: #7cc4ff; }
+
+/* Google 地圖 */
+.mapbox { position: relative; margin: 8px 18px 22px; padding: 14px 18px 18px; border-radius: 22px; background: rgba(10, 20, 45, .5); border: 1px solid var(--glass-line); backdrop-filter: blur(12px); }
+.mapbox h3 { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; font-size: 1.15rem; margin-bottom: 10px; }
+.mapbox h3 a { font-size: .9rem; font-weight: 400; }
+.mapbox iframe { display: block; width: 100%; height: 380px; border: 0; border-radius: 16px; background: #1b2a49; }
+
+.credits-box { max-width: 1180px; margin: 0 auto; padding: 4px 16px 8px; font-size: .82rem; text-shadow: 0 1px 6px rgba(0, 0, 0, .5); }
+.credits-box summary { cursor: pointer; text-align: center; }
+.credits { list-style: none; columns: 2 320px; margin-top: 10px; }
+.credits li { break-inside: avoid; padding: 2px 0; }
+@media (max-width: 760px) { .charts { grid-template-columns: 1fr; } .mapbox { margin: 8px 10px 16px; } .mapbox iframe { height: 300px; } }
