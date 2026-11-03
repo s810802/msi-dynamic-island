@@ -45,6 +45,14 @@
     </section>
   </div>
 
+  <!-- 天氣顯示器放大:在小島上直接開啟真正的天氣牆 -->
+  <div id="wxOverlay" class="overlay" hidden>
+    <section class="sheet wxsheet" role="dialog" aria-modal="true" aria-label="台灣天氣牆">
+      <header><h2>台灣天氣牆</h2><span class="wx-actions"><a href="../weather/" target="_blank" rel="noopener">在新分頁開啟 ↗</a><button id="wxClose" aria-label="關閉">✕</button></span></header>
+      <iframe id="wxFrame" title="台灣天氣牆" loading="lazy"></iframe>
+    </section>
+  </div>
+
   <!-- 風格面板 -->
   <div id="stylePanel" class="overlay" hidden>
     <section class="sheet wide" role="dialog" aria-modal="true" aria-labelledby="styleTitle">

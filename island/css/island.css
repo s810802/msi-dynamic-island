@@ -141,3 +141,8 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .wx-list li { display: grid; grid-template-columns: 1.4fr .8fr 1.4fr 1fr; gap: 8px; align-items: center; background: var(--bg1); border: 2px solid var(--line); border-radius: 14px; padding: 8px 14px; }
 .wx-list li span:nth-child(2) { font-size: 1.3rem; color: var(--primary); font-weight: 700; }
 @media (max-width: 560px) { .wx-list li { grid-template-columns: 1fr 1fr; } }
+
+.wxsheet { width: min(1240px, 100%); height: calc(100vh - 28px); }
+.wxsheet iframe { flex: 1; width: 100%; border: 0; border-radius: 0 0 20px 20px; background: #1b2a49; }
+.wx-actions { display: flex; align-items: center; gap: 14px; }
+.wx-actions a { color: var(--primary); font-weight: 600; }

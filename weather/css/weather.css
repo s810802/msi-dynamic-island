@@ -41,8 +41,8 @@ a { color: inherit; }
 .sc.night .cloud { background: rgba(120, 134, 170, .85); }
 @keyframes drift { from { left: -40%; } to { left: 110%; } }
 
-.bg .cloud { width: 16%; height: 5%; opacity: .3; }
-.hero .cloud { width: 20%; height: 8%; opacity: .45; }
+.bg .cloud { width: 14%; height: 4%; opacity: .22; }
+.hero .cloud { width: 14%; height: 5%; opacity: .28; }
 .card .cloud { width: 48%; height: 20%; }
 .rain i { position: absolute; top: -12%; width: 2px; height: 14%; border-radius: 2px; background: linear-gradient(transparent, #bfe3ff); animation: fall linear infinite; transform: rotate(10deg); }
 @keyframes fall { to { top: 112%; } }
@@ -156,3 +156,6 @@ main { width: min(1180px, 100%); margin: 0 auto; padding: 8px 16px 40px; }
   .rain i { top: 20%; }
   * { transition-duration: .01ms !important; }
 }
+
+.embed .back { display: none; }
+.embed .top { padding-top: 12px; }

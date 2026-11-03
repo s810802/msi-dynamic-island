@@ -1,6 +1,7 @@
 import { CITIES, REGIONS } from "./cities.js";
 import { kindOf, icon, scene, KIND_LABEL } from "./scenes.js";
 
+if (location.search.includes("embed")) document.documentElement.classList.add("embed");
 const $ = (s, el = document) => el.querySelector(s);
 const $$ = (s, el = document) => [...el.querySelectorAll(s)];
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));

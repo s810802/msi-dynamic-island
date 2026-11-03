@@ -506,16 +506,16 @@ const billboard = createBillboard(THREE, mats);
     if (Math.hypot(t.position.x - bx, t.position.z - bz) < 2.2) { world.remove(t); trees.splice(i, 1); }
   }
 }
+const wxOverlay = $("#wxOverlay"), wxFrame = $("#wxFrame");
 function openWeather() {
-  const rows = billboard.cities.map(c => {
-    const d = billboard.data[c.id];
-    return d ? `<li><b>${c.name}</b><span>${Math.round(d.cur.main.temp)}°C</span><span>${d.cur.weather[0].description}</span><span>${Math.round(d.days[0].max)}° / ${Math.round(d.days[0].min)}°</span></li>`
-             : `<li><b>${c.name}</b><span>--</span><span>${billboard.state.status === "nokey" ? "尚未設定 API Key" : "取得中或暫時查不到"}</span><span></span></li>`;
-  }).join("");
-  openPanel("天氣看板", `<p class="lead">看板每 7 秒換一個城市。資料來自 OpenWeather,每 10 分鐘更新。</p>
-    <ul class="wx-list">${rows}</ul>
-    <p class="links"><a href="../weather/">進入完整天氣牆(22 個縣市+五天預報) →</a></p>`);
+  lastFocus = document.activeElement;
+  if (!wxFrame.src) wxFrame.src = "../weather/?embed=1";
+  wxOverlay.hidden = false; document.body.classList.add("panel-open");
+  $("#wxClose").focus();
 }
+function closeWeather() { wxOverlay.hidden = true; document.body.classList.remove("panel-open"); lastFocus?.focus?.(); }
+$("#wxClose").addEventListener("click", closeWeather);
+wxOverlay.addEventListener("click", e => { if (e.target === wxOverlay) closeWeather(); });
 
 /* ---------- 風格 ---------- */
 const STORE_KEY = "msi-island-theme-v1";
@@ -665,7 +665,7 @@ const gl = document.createElement("button");
 gl.className = "chip chip-guide"; gl.textContent = "海龍嚮導"; gl.addEventListener("click", openGuide);
 labelBox.appendChild(gl);
 const wxChip = document.createElement("button");
-wxChip.className = "chip chip-guide"; wxChip.textContent = "天氣看板"; wxChip.addEventListener("click", openWeather);
+wxChip.className = "chip chip-guide"; wxChip.textContent = "天氣顯示器"; wxChip.addEventListener("click", openWeather);
 labelBox.appendChild(wxChip);
 labels.push({ el: wxChip, anchor: new THREE.Vector3(9, 5, 7.5) });
 const guideAnchor = new THREE.Vector3(GUARDIAN_POS[0] + 6, 4, GUARDIAN_POS[2] - 1);
@@ -689,7 +689,7 @@ ISLANDS.forEach(i => {
   li.firstChild.addEventListener("click", () => openIsland(i.id)); places.appendChild(li);
 });
 const wl = document.createElement("li");
-wl.innerHTML = `<button>天氣看板<small>各城市即時天氣</small></button>`;
+wl.innerHTML = `<button>天氣顯示器<small>台灣天氣牆</small></button>`;
 wl.firstChild.addEventListener("click", openWeather); places.appendChild(wl);
 const lg = document.createElement("li");
 lg.innerHTML = `<button>海龍嚮導<small>守護入口海域的巨龍</small></button>`;
@@ -724,7 +724,7 @@ canvas.addEventListener("pointermove", e => {
   if (e.buttons) { tip.hidden = true; return; }
   const hit = pick(e);
   canvas.style.cursor = hit ? "pointer" : "grab";
-  if (hit) { tip.hidden = false; tip.textContent = hit.guardian ? "海龍嚮導" : hit.billboard ? "天氣看板" : `MSI ${SERIES[hit.series].name}`; tip.style.transform = `translate(${e.clientX + 14}px, ${e.clientY + 14}px)`; }
+  if (hit) { tip.hidden = false; tip.textContent = hit.guardian ? "海龍嚮導" : hit.billboard ? "天氣顯示器(點一下放大)" : `MSI ${SERIES[hit.series].name}`; tip.style.transform = `translate(${e.clientX + 14}px, ${e.clientY + 14}px)`; }
   else tip.hidden = true;
 });
 canvas.addEventListener("pointerleave", () => { tip.hidden = true; });
@@ -737,7 +737,7 @@ function syncPause() { btnPause.textContent = paused ? "▶ 繼續動態" : "⏸
 btnPause.addEventListener("click", () => { paused = !paused; syncPause(); });
 syncPause();
 $("#btnPlaces").addEventListener("click", () => { const open = $("#places").classList.toggle("open"); $("#btnPlaces").setAttribute("aria-expanded", String(open)); });
-document.addEventListener("keydown", e => { if (e.key === "Escape") { if (!panel.hidden) closePanel(); else if (!stylePanel.hidden) closeStyles(); } });
+document.addEventListener("keydown", e => { if (e.key === "Escape") { if (!wxOverlay.hidden) closeWeather(); else if (!panel.hidden) closePanel(); else if (!stylePanel.hidden) closeStyles(); } });
 
 /* ---------- 風格選擇面板(128 種) ---------- */
 const stylePanel = $("#stylePanel"), styleGrid = $("#styleGrid");
