@@ -1,0 +1,8 @@
+{
+  // 部署設定:網站檔案放在 ./dist(只放要公開的檔案),/api/* 由 worker.js 處理。
+  // OWM_KEY 用 `npx wrangler secret put OWM_KEY` 設定,不要寫進任何檔案。
+  "name": "msi-island",
+  "main": "worker.js",
+  "compatibility_date": "2026-11-02",
+  "assets": { "directory": "./dist", "run_worker_first": ["/api/*"] }
+}

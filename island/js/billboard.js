@@ -18,10 +18,10 @@ try { cache = JSON.parse(localStorage.getItem(CACHE_KEY) || "{}"); } catch { cac
 async function owm(kind, city) {
   const id = `${kind}:${city.id}`, hit = cache[id];
   if (hit && Date.now() - hit.t < TTL) return hit.d;
-  if (!KEY) throw new Error("nokey");
   let res;
-  try { res = await fetch(`https://api.openweathermap.org/data/2.5/${kind}?lat=${city.lat}&lon=${city.lon}&appid=${encodeURIComponent(KEY)}&units=metric&lang=zh_tw`); }
+  try { res = await fetch(KEY ? `https://api.openweathermap.org/data/2.5/${kind}?lat=${city.lat}&lon=${city.lon}&appid=${encodeURIComponent(KEY)}&units=metric&lang=zh_tw` : `/api/weather?kind=${kind}&lat=${city.lat}&lon=${city.lon}`); }
   catch { if (hit) return hit.d; throw new Error("net"); }
+  if (!KEY && (res.status === 404 || res.status === 405 || res.status === 500)) throw new Error("nokey");
   if (!res.ok) { if (hit) return hit.d; throw new Error(String(res.status)); }
   const d = await res.json();
   cache[id] = { t: Date.now(), d };
@@ -150,7 +150,6 @@ export function createBillboard(THREE, mats) {
   }
 
   async function load() {
-    if (!KEY) { state.status = "nokey"; return; }
     await Promise.all(cities.map(async city => {
       try {
         const [cur, f] = await Promise.all([owm("weather", city), owm("forecast", city)]);

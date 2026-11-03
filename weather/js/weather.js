@@ -25,10 +25,12 @@ class ApiError extends Error { constructor(code, msg) { super(msg); this.code = 
 async function owm(kind, city, force = false) {
   const id = `${kind}:${city.id}`, hit = cache[id];
   if (!force && hit && Date.now() - hit.t < TTL) return hit.d;
-  if (!KEY) throw new ApiError("nokey", "尚未設定 API Key");
-  const url = `${API}/${kind}?lat=${city.lat}&lon=${city.lon}&appid=${encodeURIComponent(KEY)}&units=metric&lang=zh_tw`;
+  // 有自己的 Key 就直接查;沒有就走同網域的 /api/weather(Cloudflare Worker 代查,Key 不在網頁裡)
+  const url = KEY ? `${API}/${kind}?lat=${city.lat}&lon=${city.lon}&appid=${encodeURIComponent(KEY)}&units=metric&lang=zh_tw`
+    : `/api/weather?kind=${kind}&lat=${city.lat}&lon=${city.lon}`;
   let res;
   try { res = await fetch(url); } catch { if (hit) return hit.d; throw new ApiError("net", "網路連線失敗"); }
+  if (!KEY && (res.status === 404 || res.status === 405 || res.status === 500)) throw new ApiError("nokey", "尚未設定 API Key");
   if (res.status === 401) throw new ApiError("401", "API Key 無效,或剛申請尚未啟用(通常需要 1~2 小時)");
   if (res.status === 429) { if (hit) return hit.d; throw new ApiError("429", "查詢次數太多,請稍後再試"); }
   if (!res.ok) { if (hit) return hit.d; throw new ApiError("http", `伺服器回應 ${res.status}`); }
