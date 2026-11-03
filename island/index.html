@@ -22,15 +22,19 @@
       <button id="btnPlaces" aria-expanded="false" aria-controls="places">地點</button>
       <button id="btnHome">回到全景</button>
       <button id="btnStyle">風格 ✦ 128</button>
+      <button id="btnMusic" aria-pressed="false">♪ 音樂:關</button>
+      <button id="btnTime">時間:即時</button>
       <button id="btnPause" aria-pressed="false">⏸ 暫停動態</button>
       <a class="official" href="https://tw-store.msi.com/" target="_blank" rel="noopener">MSI 官方商店 ↗</a>
       <a class="official" href="https://tw.msi.com/" target="_blank" rel="noopener">MSI 官網 ↗</a>
     </div>
   </header>
 
+  <div id="clock" role="timer" aria-label="現在時間"><span id="clockIcon">☀️</span><span id="clockTime">--:--:--</span><small id="clockLabel">台北時間</small></div>
+
   <nav id="places" aria-label="地點清單"><ul id="placeList"></ul></nav>
 
-  <p class="hint">拖曳旋轉・滾輪或雙指縮放・右鍵或雙指平移・點建築看產品</p>
+  <p class="hint">拖曳旋轉・滾輪或雙指縮放・右鍵或雙指平移・點建築看產品・音樂需按「♪ 音樂」才會播放</p>
 
   <!-- 產品面板 -->
   <div id="panel" class="overlay" hidden>

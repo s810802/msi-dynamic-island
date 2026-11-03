@@ -5,6 +5,8 @@ export function makeMaterials(THREE) {
     primary: mk("#e0443b"), accent: mk("#f4c24f"), dark: mk("#3b404c"), cream: mk("#fff5dc"),
     glass: mk("#a9d6e0"), wood: mk("#bd986e"), leaf: mk("#6fae6a"), leaf2: mk("#8fc27f"),
     white: mk("#fffcf0"), rock: mk("#cfc7b4"),
+    // 窗燈與路燈:白天微亮,夜晚由 main.js 調高 emissiveIntensity
+    glow: new THREE.MeshStandardMaterial({ color: "#fff1c4", emissive: "#ffc65a", emissiveIntensity: 0.1, roughness: 0.6, flatShading: true }),
   };
 }
 
@@ -122,8 +124,72 @@ export function buildLandmark(THREE, id, m) {
       add(cyl(0.04, 0.04, 0.45, 5), m.wood, 1.4, 0.22, 0.9);
       break;
   }
+  // 窗燈(夜晚會亮):每個地標幾個發光窗/燈
+  const lit = (w, h, d, x, y, z) => add(box(w, h, d), m.glow, x, y, z).castShadow = false;
+  const LIT = {
+    titan: [[0.2, 0.5, 0.06, -0.35, 1.7, 0.88], [0.2, 0.5, 0.06, 0, 1.7, 0.92], [0.2, 0.5, 0.06, 0.35, 1.7, 0.88], [0.16, 0.4, 0.06, 1.0, 1.4, 0.5]],
+    raider: [-0.9, -0.45, 0, 0.45, 0.9].map(x => [0.22, 0.2, 0.05, x, 0.98, 0.95]),
+    stealth: [-0.7, 0, 0.7].map(x => [0.4, 0.22, 0.05, x, 0.72, 0.77]),
+    katana: [-1, 1].map(x => [0.2, 0.2, 0.2, x, 0.7, 0.95]),
+    vector: [[0.7, 0.12, 0.7, 0, 2.7, 0], [1.9, 0.06, 1.9, 0, 0.42, 0]],
+    cyborg: [[1.4, 0.18, 0.05, 0, 1.3, 0.97]],
+    creator: [[0.7, 0.4, 0.03, -0.5, 0.55, 0.88], [0.3, 0.55, 0.03, 0.7, 0.35, 0.88]],
+    prestige: [0, 1, 2, 3, 4].map(i => [1.0, 0.3, 0.03, 0, 0.95 + i * 0.6, 0.67]),
+    modern: [[0.4, 0.3, 0.03, -0.6, 0.65, 0.85], [0.4, 0.3, 0.03, 0.6, 0.65, 0.85], [0.3, 0.55, 0.03, 0, 0.33, 0.85]],
+  };
+  (LIT[id] || []).forEach(a => lit(...a));
   g.userData.seriesId = id;
   return g;
+}
+
+export function buildLamp(THREE, m, glowTexture) {
+  const g = new THREE.Group();
+  const post = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.05, 1.1, 6), m.dark); post.position.y = 0.55; post.castShadow = true; g.add(post);
+  const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.13, 8, 6), m.glow); bulb.position.y = 1.15; g.add(bulb);
+  const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTexture, color: "#ffd27a", transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending }));
+  sprite.scale.setScalar(2.4); sprite.position.y = 1.15; g.add(sprite);
+  g.userData.sprite = sprite;
+  return g;
+}
+
+// 動物:sheep 綿羊、dog 小狗、cat 小貓、duck 鴨子(浮在海面)
+export function buildAnimal(THREE, kind) {
+  const mat = c => new THREE.MeshStandardMaterial({ color: c, roughness: 0.9, flatShading: true });
+  const g = new THREE.Group();
+  const add = (geo, color, x, y, z, sx = 1, sy = 1, sz = 1) => { const o = new THREE.Mesh(geo, mat(color)); o.position.set(x, y, z); o.scale.set(sx, sy, sz); o.castShadow = true; g.add(o); return o; };
+  const legs = [];
+  const leg = (x, z, h, color) => { const p = new THREE.Group(); p.position.set(x, h, z); const o = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.04, h, 5), mat(color)); o.position.y = -h / 2; o.castShadow = true; p.add(o); g.add(p); legs.push(p); };
+  const S = (r, w = 10, h = 8) => new THREE.SphereGeometry(r, w, h);
+  if (kind === "sheep") {
+    add(S(0.3), "#fffaf0", 0, 0.42, 0, 1, 0.9, 1.35);
+    add(S(0.17), "#3a3430", 0, 0.5, 0.45); add(S(0.07), "#fffaf0", 0, 0.66, 0.4);
+    [[-0.12, 0.2], [0.12, 0.2], [-0.12, -0.2], [0.12, -0.2]].forEach(([x, z]) => leg(x, z, 0.22, "#3a3430"));
+  } else if (kind === "dog") {
+    add(new THREE.CapsuleGeometry(0.13, 0.4, 4, 8), "#b9824f", 0, 0.38, 0).rotation.x = Math.PI / 2;
+    add(S(0.16), "#b9824f", 0, 0.55, 0.38); add(S(0.07), "#3a2a22", 0, 0.52, 0.52);
+    add(new THREE.ConeGeometry(0.06, 0.16, 5), "#7a4f2d", -0.1, 0.7, 0.36); add(new THREE.ConeGeometry(0.06, 0.16, 5), "#7a4f2d", 0.1, 0.7, 0.36);
+    add(new THREE.CylinderGeometry(0.03, 0.03, 0.3, 5), "#b9824f", 0, 0.5, -0.38).rotation.x = -0.9;
+    [[-0.08, 0.2], [0.08, 0.2], [-0.08, -0.2], [0.08, -0.2]].forEach(([x, z]) => leg(x, z, 0.24, "#7a4f2d"));
+  } else if (kind === "cat") {
+    add(new THREE.CapsuleGeometry(0.1, 0.3, 4, 8), "#f0a35e", 0, 0.3, 0).rotation.x = Math.PI / 2;
+    add(S(0.13), "#f0a35e", 0, 0.4, 0.3);
+    add(new THREE.ConeGeometry(0.05, 0.12, 4), "#f0a35e", -0.07, 0.52, 0.3); add(new THREE.ConeGeometry(0.05, 0.12, 4), "#f0a35e", 0.07, 0.52, 0.3);
+    add(new THREE.CylinderGeometry(0.025, 0.025, 0.4, 5), "#d98a45", 0, 0.45, -0.38).rotation.x = -0.6;
+    [[-0.07, 0.15], [0.07, 0.15], [-0.07, -0.15], [0.07, -0.15]].forEach(([x, z]) => leg(x, z, 0.18, "#d98a45"));
+  } else { // duck
+    add(S(0.2), "#fffaf0", 0, 0.12, 0, 1, 0.75, 1.3);
+    add(S(0.12), "#fffaf0", 0, 0.34, 0.22); add(new THREE.ConeGeometry(0.05, 0.12, 5), "#f4a53a", 0, 0.32, 0.36).rotation.x = Math.PI / 2;
+  }
+  g.userData.legs = legs;
+  return g;
+}
+
+export function makeGlowTexture(THREE) {
+  const c = document.createElement("canvas"); c.width = c.height = 64;
+  const x = c.getContext("2d"), grd = x.createRadialGradient(32, 32, 0, 32, 32, 32);
+  grd.addColorStop(0, "rgba(255,255,255,1)"); grd.addColorStop(0.35, "rgba(255,255,255,.35)"); grd.addColorStop(1, "rgba(255,255,255,0)");
+  x.fillStyle = grd; x.fillRect(0, 0, 64, 64);
+  return new THREE.CanvasTexture(c);
 }
 
 export function buildTree(THREE, m, kind) {

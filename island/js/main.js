@@ -5,7 +5,9 @@ import { createIslandPath } from "./runtime-kit/paths.mjs";
 import { createIslandWater } from "./runtime-kit/water.mjs";
 import { SERIES, ISLANDS, OFFICIAL } from "./data.js";
 import { THEMES, FAMILY_LIST, DEFAULT_THEME_ID } from "./themes.js";
-import { makeMaterials, buildLandmark, buildTree, buildResident, createGuardian } from "./landmarks.js";
+import { makeMaterials, buildLandmark, buildTree, buildResident, createGuardian, buildLamp, buildAnimal, makeGlowTexture } from "./landmarks.js";
+import { createSky } from "./sky.js";
+import { createMusic } from "./music.js";
 
 const $ = (s, el = document) => el.querySelector(s);
 const $$ = (s, el = document) => [...el.querySelectorAll(s)];
@@ -252,6 +254,103 @@ guardian.root.position.set(...GUARDIAN_POS);
 guardian.root.rotation.y = -0.55;
 world.add(guardian.root);
 
+/* 路燈(夜晚亮起) */
+const glowTexture = makeGlowTexture(THREE);
+const lamps = [];
+for (const [name, [x, z]] of Object.entries(NODES)) {
+  if (name.startsWith("dock") && name !== "dockW") continue;
+  for (const [dx, dz] of [[0.9, 0.9]]) {
+    const y = surfaceY(x + dx, z + dz); if (y === null) continue;
+    const lamp = buildLamp(THREE, mats, glowTexture);
+    lamp.position.set(x + dx, y, z + dz); world.add(lamp); lamps.push(lamp);
+  }
+}
+for (const b of BRIDGES) for (const t of [0.25, 0.75]) {  // 橋頭兩側各一盞
+  const p = paths[b.id].pointAt(t);
+  const lamp = buildLamp(THREE, mats, glowTexture);
+  lamp.position.set(p.x, p.y + 0.02, p.z + 0.7); world.add(lamp); lamps.push(lamp);
+}
+
+/* 天空 */
+const sky = createSky(THREE, mats);
+world.add(sky.group);
+
+/* 自由走動的人與動物:在整片陸地上隨意散步,避開地標 */
+const lmList = Object.values(WORLD).flatMap(d => d.plateaus.filter(p => p[4]));
+const nearLandmark = (x, z, pad) => lmList.some(p => Math.hypot(p[0] - x, p[2] - z) < 1.7 + pad);
+function lineClear(island, ax, az, bx, bz) {
+  const len = Math.hypot(bx - ax, bz - az), n = Math.max(1, Math.ceil(len / 0.4));
+  for (let i = 0; i <= n; i++) {
+    const x = ax + (bx - ax) * i / n, z = az + (bz - az) * i / n;
+    if (!terrains[island].contains(x, z) || nearLandmark(x, z, 0.2)) return false;
+  }
+  return true;
+}
+function randomSpot(island) {
+  const o = WORLD[island].outline, xs = o.map(p => p[0]), zs = o.map(p => p[1]);
+  for (let i = 0; i < 80; i++) {
+    const x = Math.min(...xs) + rand() * (Math.max(...xs) - Math.min(...xs)), z = Math.min(...zs) + rand() * (Math.max(...zs) - Math.min(...zs));
+    if (terrains[island].contains(x, z) && [[1, 0], [-1, 0], [0, 1], [0, -1]].every(([dx, dz]) => terrains[island].contains(x + dx * 0.6, z + dz * 0.6)) && !nearLandmark(x, z, 0.4)) return [x, z];
+  }
+  return null;
+}
+const roamers = [];
+function addRoamer(island, obj, speed, scale = 1) {
+  const spot = randomSpot(island); if (!spot) return;
+  obj.scale.setScalar(scale); world.add(obj);
+  obj.position.set(spot[0], terrains[island].surfaceAt(spot[0], spot[1]) ?? 1, spot[1]);
+  obj.rotation.y = rand() * 6;
+  roamers.push({ obj, island, speed, tx: null, tz: null, dwell: rand() * 3, phase: rand() * 6 });
+}
+[["core", 4], ["creator", 1], ["business", 1], ["daily", 1]].forEach(([isl, n]) => {
+  for (let i = 0; i < n; i++) addRoamer(isl, buildResident(THREE, SHIRTS[(i + 3 + isl.length) % SHIRTS.length], SKINS[(i + 1) % SKINS.length], HAIRS[(i + 2) % HAIRS.length]), 0.55 + rand() * 0.4, 1.15);
+});
+[["core", "sheep", 5, 0.45, 1], ["daily", "sheep", 2, 0.4, 1], ["core", "dog", 2, 1.0, 1], ["business", "dog", 1, 0.9, 1],
+ ["creator", "cat", 1, 0.6, 1], ["daily", "cat", 1, 0.6, 1], ["business", "cat", 1, 0.6, 1]].forEach(([isl, kind, n, sp, sc]) => {
+  for (let i = 0; i < n; i++) addRoamer(isl, buildAnimal(THREE, kind), sp * (0.8 + rand() * 0.4), sc);
+});
+function stepRoamer(r, dt) {
+  const limbs = r.obj.userData.limbs, legs = r.obj.userData.legs;
+  const swing = v => {
+    r.phase += v * 0.18; const sw = v ? Math.sin(r.phase * 6) * 0.6 : 0;
+    if (limbs) { limbs.legL.rotation.x = sw; limbs.legR.rotation.x = -sw; limbs.armL.rotation.x = -sw * 0.8; limbs.armR.rotation.x = sw * 0.8; }
+    if (legs) legs.forEach((l, i) => { l.rotation.x = (i % 2 ? -sw : sw) * 0.9; });
+  };
+  if (r.dwell > 0) { r.dwell -= dt; swing(0); return; }
+  const p = r.obj.position;
+  if (r.tx === null) {
+    for (let i = 0; i < 20; i++) {
+      const spot = randomSpot(r.island);
+      if (spot && Math.hypot(spot[0] - p.x, spot[1] - p.z) > 1.5 && lineClear(r.island, p.x, p.z, spot[0], spot[1])) { r.tx = spot[0]; r.tz = spot[1]; break; }
+    }
+    if (r.tx === null) { r.dwell = 1 + rand() * 2; return; }
+  }
+  const dx = r.tx - p.x, dz = r.tz - p.z, d = Math.hypot(dx, dz);
+  if (d < 0.12) { r.tx = null; r.dwell = 1.5 + rand() * 5; swing(0); return; }
+  const mv = Math.min(d, r.speed * dt);
+  p.x += dx / d * mv; p.z += dz / d * mv;
+  p.y = r.island ? (terrains[r.island].surfaceAt(p.x, p.z) ?? p.y) : p.y;
+  let da = Math.atan2(dx, dz) - r.obj.rotation.y; da = Math.atan2(Math.sin(da), Math.cos(da));
+  r.obj.rotation.y += da * Math.min(1, dt * 6);
+  swing(r.speed);
+}
+
+/* 海面上游動的鴨子 */
+const ducks = [[-14, 8, 3, 0.18], [8, -13, 3, -0.15], [24, 10, 3, 0.2], [-15, -8, 2.6, -0.17], [10, 19, 2.4, 0.16]].flatMap(([cx, cz, R, sp], g) =>
+  Array.from({ length: 2 }, (_, i) => {
+    const obj = buildAnimal(THREE, "duck"); obj.scale.setScalar(1.3); world.add(obj);
+    return { obj, cx, cz, R: R + i * 0.6, sp, a: rand() * 6.28 + i * 1.5 };
+  }));
+function stepDucks(dt, t) {
+  for (const d of ducks) {
+    d.a += d.sp * dt;
+    const x = d.cx + Math.cos(d.a) * d.R, z = d.cz + Math.sin(d.a) * d.R;
+    d.obj.position.set(x, WATER + 0.02 + Math.sin(t * 2 + d.a * 3) * 0.03, z);
+    d.obj.rotation.y = Math.atan2(-Math.sin(d.a) * Math.sign(d.sp), Math.cos(d.a) * Math.sign(d.sp));
+    d.obj.rotation.z = Math.sin(t * 2 + d.a * 3) * 0.05;
+  }
+}
+
 /* ---------- 風格 ---------- */
 const STORE_KEY = "msi-island-theme-v1";
 let applied = THEMES.find(t => t.id === DEFAULT_THEME_ID);
@@ -259,9 +358,27 @@ let custom = {};
 try { const saved = JSON.parse(localStorage.getItem(STORE_KEY) || "null"); if (saved) { applied = THEMES.find(t => t.id === saved.id) || applied; custom = saved.custom || {}; } } catch {}
 let current = applied, currentCustom = { ...custom };
 
+let baseScene = null, baseTheme = null, nightF = 0, appliedNight = -1;
+const NIGHT_TINT = new THREE.Color("#1b2a5c"), tcA = new THREE.Color(), tcB = new THREE.Color();
+const nightColor = (hex, f) => tcA.set(hex).lerp(tcB.set(hex).multiplyScalar(0.34).lerp(NIGHT_TINT, 0.3), f).clone();
+function applyNight(f) {
+  if (!baseScene) return;
+  appliedNight = f;
+  const s = baseScene, dark = baseTheme.dark;
+  water.setColors({ sea: nightColor(s.sea, f), deep: nightColor(s.deep, f) });
+  for (const t of Object.values(terrains)) t.setColors({ groundColor: nightColor(s.lawn, f), bankColor: nightColor(s.shore, f) });
+  scene.background = nightColor(s.deep, f);
+  hemi.intensity = (dark ? 0.9 : 1.8) * (1 - 0.62 * f);
+  key.intensity = (dark ? 1.05 : 2.2) * (1 - 0.7 * f);
+  key.color.set(dark ? "#cfd8ff" : "#fff4d9").lerp(tcB.set("#9fb2ff"), f);
+  fill.intensity = (dark ? 0.5 : 0.65) * (1 - 0.5 * f);
+  mats.glow.emissiveIntensity = 0.12 + 2.3 * f;
+  for (const l of lamps) l.userData.sprite.material.opacity = 0.9 * f;
+}
 function applyTheme(theme, over = {}) {
   current = theme; currentCustom = { ...over };
   const s = { ...theme.scene, ...over };
+  baseScene = s; baseTheme = theme;
   for (const k of ["primary", "accent", "dark", "cream", "glass"]) mats[k].color.set(s[k]);
   mats.road.color.set(s.cream);
   mats.white.color.set(theme.dark ? "#e8ebf2" : "#fffcf0");
@@ -281,6 +398,7 @@ function applyTheme(theme, over = {}) {
   root.setProperty("--on-primary", over.primary ? pickText(over.primary) : u.onPrimary);
   root.setProperty("--accent", s.accent);
   document.documentElement.dataset.mode = theme.dark ? "dark" : "light";
+  if (lamps.length || nightF) applyNight(nightF);
 }
 function pickText(hex) { const c = new THREE.Color(hex); return (0.2126 * c.r + 0.7152 * c.g + 0.0722 * c.b) > 0.4 ? "#1a1a1a" : "#ffffff"; }
 applyTheme(applied, custom);
@@ -494,6 +612,43 @@ function closeStyles(keep) {
 $("#styleClose").addEventListener("click", () => closeStyles(false));
 $("#btnStyle").addEventListener("click", openStyles);
 
+/* ---------- 時間、夜晚、音樂 ---------- */
+let timeMode = "auto";
+const TIME_LABELS = { auto: "時間:即時", day: "時間:白天", night: "時間:夜晚" };
+const clockFmt = new Intl.DateTimeFormat("zh-TW", { timeZone: "Asia/Taipei", hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23" });
+function taipeiNow() {
+  const parts = clockFmt.formatToParts(new Date()), g = t => +parts.find(p => p.type === t).value;
+  return { h: g("hour"), m: g("minute"), s: g("second") };
+}
+const targetNight = h => (h >= 19 || h < 5) ? 1 : h >= 17.5 ? (h - 17.5) / 1.5 : h < 6.5 ? 1 - (h - 5) / 1.5 : 0;
+function currentHour() {
+  if (timeMode === "day") return 12;
+  if (timeMode === "night") return 22;
+  const n = taipeiNow(); return n.h + n.m / 60 + n.s / 3600;
+}
+function updateClock() {
+  const n = taipeiNow(), pad = v => String(v).padStart(2, "0"), h = currentHour();
+  $("#clockTime").textContent = `${pad(n.h)}:${pad(n.m)}:${pad(n.s)}`;
+  const phase = h >= 19 || h < 5 ? ["🌙", "夜晚"] : h < 8 ? ["🌅", "清晨"] : h >= 17.5 ? ["🌇", "黃昏"] : ["☀️", "白天"];
+  $("#clockIcon").textContent = phase[0];
+  $("#clockLabel").textContent = timeMode === "auto" ? `台北時間・${phase[1]}` : `預覽${phase[1]}(實際 ${pad(n.h)}:${pad(n.m)})`;
+}
+updateClock(); setInterval(updateClock, 1000);
+nightF = targetNight(currentHour()); applyNight(nightF);
+$("#btnTime").addEventListener("click", () => {
+  timeMode = { auto: "day", day: "night", night: "auto" }[timeMode];
+  $("#btnTime").textContent = TIME_LABELS[timeMode]; updateClock();
+});
+
+const music = createMusic();
+const btnMusic = $("#btnMusic");
+function syncMusic() { btnMusic.textContent = music.on ? "♪ 音樂:開" : "♪ 音樂:關"; btnMusic.setAttribute("aria-pressed", String(music.on)); }
+btnMusic.addEventListener("click", async () => {
+  if (music.on) music.stop(); else { try { await music.start(); } catch { /* 瀏覽器不允許時維持關閉 */ } }
+  syncMusic();
+});
+syncMusic();
+
 /* ---------- 主迴圈 ---------- */
 let sim = 0, last = performance.now();
 function frame(now) {
@@ -503,7 +658,13 @@ function frame(now) {
     water.update(sim);
     guardian.update(sim);
     for (const r of residents) stepResident(r, dt);
+    for (const r of roamers) stepRoamer(r, dt);
+    stepDucks(dt, sim);
+    sky.update(sim, dt, nightF);
   }
+  { const target = targetNight(currentHour()); nightF += (target - nightF) * Math.min(1, dt * 1.5);
+    if (Math.abs(nightF - target) < 0.004) nightF = target;
+    if (Math.abs(nightF - appliedNight) > 0.004) applyNight(nightF); }
   if (tween) {
     const k = Math.min(1, (now - tween.t0) / 800), e = 1 - Math.pow(1 - k, 3);
     controls.target.lerpVectors(tween.startT, tween.target, e);
@@ -518,4 +679,4 @@ function frame(now) {
 }
 resize();
 requestAnimationFrame(frame);
-window.__island = { stepResident, scene, camera, controls, residents, edges, terrains, guardian, THEMES, applyTheme, openIsland };
+window.__island = { stepResident, stepRoamer, roamers, sky, ducks, lamps, mats, setTimeMode: m => { timeMode = m; }, nightFactor: () => nightF, scene, camera, controls, residents, edges, terrains, guardian, THEMES, applyTheme, openIsland };
