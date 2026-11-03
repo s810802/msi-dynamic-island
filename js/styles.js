@@ -45,7 +45,7 @@ overlay.innerHTML = `<section class="style-sheet" role="dialog" aria-modal="true
   </div></section>`;
 document.body.appendChild(overlay);
 const fab = document.createElement("button");
-fab.className = "style-fab"; fab.textContent = "風格 ✦ 128";
+fab.className = "style-fab"; fab.innerHTML = '<span class="lbl">風格 </span>✦ 128'; fab.setAttribute("aria-label", "選擇風格(共 128 種)");
 document.body.appendChild(fab);
 
 let mode = "light", family = "all", draft = applied, draftCustom = {}, lastFocus = null;

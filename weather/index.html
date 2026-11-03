@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>台灣天氣牆</title>
+  <meta name="description" content="隨時查詢台灣 22 個縣市的目前天氣與未來五天氣溫預報。">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Iansui&family=Klee+One:wght@400;600&display=swap">
+  <link rel="stylesheet" href="css/weather.css">
+</head>
+<body data-kind="clear" data-night="0">
+  <div id="bg" class="bg" aria-hidden="true"></div>
+
+  <header class="top">
+    <a class="back" href="../">← 回 MSI 首頁</a>
+    <h1>台灣天氣牆</h1>
+    <p class="sub">22 個縣市的目前天氣與未來五天氣溫預報</p>
+  </header>
+
+  <main>
+    <section id="keyBox" class="keybox" hidden>
+      <h2>需要 OpenWeather API Key</h2>
+      <p id="keyMsg"></p>
+      <form id="keyForm">
+        <label for="keyInput">請輸入你的 API Key(只會存在這個瀏覽器,不會上傳到任何地方)</label>
+        <div class="keyrow"><input id="keyInput" autocomplete="off" spellcheck="false" placeholder="32 個字元的英數字"><button type="submit">儲存並查詢</button></div>
+      </form>
+      <button id="btnForget" class="link">清除已儲存的 Key</button>
+    </section>
+
+    <section id="hero" class="hero" aria-live="polite"><p class="hero-wait">正在取得天氣資料…</p></section>
+
+    <section class="wallbar">
+      <div id="regions" class="regions" role="group" aria-label="地區篩選"></div>
+      <label class="search"><span class="sr">搜尋縣市</span><input id="q" type="search" placeholder="搜尋縣市,例如:高雄"></label>
+      <button id="btnRefresh" class="refresh">↻ 重新整理</button>
+    </section>
+    <p id="status" class="status" role="status">準備中…</p>
+    <p id="summary" class="summary"></p>
+
+    <section id="wall" class="wall" aria-label="各縣市天氣"></section>
+    <p id="empty" class="empty" hidden>找不到符合的縣市。</p>
+  </main>
+
+  <footer class="foot">天氣資料來源:<a href="https://openweathermap.org/" target="_blank" rel="noopener">OpenWeather</a>・每 10 分鐘自動更新・僅供參考,正式警特報請看<a href="https://www.cwa.gov.tw/" target="_blank" rel="noopener">中央氣象署</a></footer>
+
+  <script type="module" src="js/weather.js"></script>
+  <noscript>此頁需要 JavaScript 才能顯示天氣。</noscript>
+</body>
+</html>

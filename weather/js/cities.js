@@ -1,0 +1,26 @@
+// 台灣 22 個縣市(以縣市政府所在地附近座標查詢)
+export const REGIONS = ["全部", "北部", "中部", "南部", "東部", "離島"];
+export const CITIES = [
+  { id: "taipei",   name: "台北市", region: "北部", lat: 25.033, lon: 121.565 },
+  { id: "newtaipei",name: "新北市", region: "北部", lat: 25.012, lon: 121.465 },
+  { id: "keelung",  name: "基隆市", region: "北部", lat: 25.128, lon: 121.742 },
+  { id: "taoyuan",  name: "桃園市", region: "北部", lat: 24.994, lon: 121.301 },
+  { id: "hsinchu",  name: "新竹市", region: "北部", lat: 24.814, lon: 120.967 },
+  { id: "hsinchuc", name: "新竹縣", region: "北部", lat: 24.839, lon: 121.004 },
+  { id: "miaoli",   name: "苗栗縣", region: "中部", lat: 24.560, lon: 120.821 },
+  { id: "taichung", name: "台中市", region: "中部", lat: 24.148, lon: 120.674 },
+  { id: "changhua", name: "彰化縣", region: "中部", lat: 24.075, lon: 120.543 },
+  { id: "nantou",   name: "南投縣", region: "中部", lat: 23.961, lon: 120.972 },
+  { id: "yunlin",   name: "雲林縣", region: "中部", lat: 23.709, lon: 120.431 },
+  { id: "chiayi",   name: "嘉義市", region: "南部", lat: 23.480, lon: 120.449 },
+  { id: "chiayic",  name: "嘉義縣", region: "南部", lat: 23.459, lon: 120.293 },
+  { id: "tainan",   name: "台南市", region: "南部", lat: 22.999, lon: 120.227 },
+  { id: "kaohsiung",name: "高雄市", region: "南部", lat: 22.627, lon: 120.301 },
+  { id: "pingtung", name: "屏東縣", region: "南部", lat: 22.552, lon: 120.549 },
+  { id: "yilan",    name: "宜蘭縣", region: "東部", lat: 24.702, lon: 121.738 },
+  { id: "hualien",  name: "花蓮縣", region: "東部", lat: 23.992, lon: 121.601 },
+  { id: "taitung",  name: "台東縣", region: "東部", lat: 22.757, lon: 121.144 },
+  { id: "penghu",   name: "澎湖縣", region: "離島", lat: 23.571, lon: 119.579 },
+  { id: "kinmen",   name: "金門縣", region: "離島", lat: 24.449, lon: 118.377 },
+  { id: "lienchiang",name: "連江縣(馬祖)", region: "離島", lat: 26.160, lon: 119.950 },
+];

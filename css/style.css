@@ -219,7 +219,7 @@ h1 em { font-style: normal; color: var(--red); }
 }
 
 /* ---------- 風格選擇(128 種) ---------- */
-.style-fab { position: fixed; right: 16px; bottom: 16px; z-index: 90; background: var(--red); color: var(--on-red); border: 0; border-radius: 999px; padding: 10px 20px; font: inherit; font-weight: 600; cursor: pointer; box-shadow: 0 8px 24px rgba(0,0,0,.25); }
+.style-fab { position: fixed; right: 16px; top: 14px; z-index: 90; background: var(--red); color: var(--on-red); border: 0; border-radius: 999px; padding: 10px 20px; font: inherit; font-weight: 600; cursor: pointer; box-shadow: 0 8px 24px rgba(0,0,0,.25); }
 .style-overlay { position: fixed; inset: 0; z-index: 120; background: rgba(10,14,20,.45); display: grid; place-items: center; padding: 14px; }
 .style-overlay[hidden] { display: none; }
 .style-sheet { background: var(--bg-alt); color: var(--text); border: 2px solid var(--line); border-radius: 22px; width: min(900px, 100%); max-height: calc(100vh - 28px); display: flex; flex-direction: column; }
@@ -244,3 +244,5 @@ h1 em { font-style: normal; color: var(--red); }
 .s-custom button, .s-actions button { background: none; border: 2px solid var(--line); border-radius: 999px; padding: 2px 16px; font: inherit; color: var(--text); cursor: pointer; }
 .s-actions { display: flex; justify-content: flex-end; gap: 10px; }
 .s-actions .primary { background: var(--red); color: var(--on-red); border-color: var(--red); }
+
+@media (max-width: 560px) { .style-fab { padding: 8px 14px; } .style-fab .lbl { display: none; } }
