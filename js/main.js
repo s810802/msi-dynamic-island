@@ -3,7 +3,8 @@
 const SERIES = [
   { id: "titan",   name: "Titan",   group: "電競", desc: "旗艦級電競,追求極致效能與散熱。",       score: { 效能: 5, 便攜: 1, 創作: 4, 價格: 1 } },
   { id: "raider",  name: "Raider",  group: "電競", desc: "高階電競,強調頂規硬體與炫目外觀。",     score: { 效能: 5, 便攜: 2, 創作: 4, 價格: 2 } },
-  { id: "vector",  name: "Vector",  group: "電競", desc: "高效能電競,兼顧性能與平衡。",           score: { 效能: 4, 便攜: 2, 創作: 3, 價格: 3 } },
+  { id: "stealth", name: "Stealth", group: "電競", desc: "兼顧電競效能與輕薄機身,玩遊戲也能帶著走。", score: { 效能: 4, 便攜: 4, 創作: 4, 價格: 2 } },
+  { id: "vector", name: "Vector",  group: "電競", desc: "高效能電競,兼顧性能與平衡。",           score: { 效能: 4, 便攜: 2, 創作: 3, 價格: 3 } },
   { id: "katana",  name: "Katana",  group: "電競", desc: "主流電競,入門高效能的熱門選擇。",       score: { 效能: 4, 便攜: 3, 創作: 3, 價格: 4 } },
   { id: "cyborg",  name: "Cyborg",  group: "電競", desc: "個性化外型的入門電競款。",               score: { 效能: 3, 便攜: 3, 創作: 2, 價格: 5 } },
   { id: "creator", name: "Creator", group: "創作", desc: "為剪輯、3D、設計打造,色彩準確且效能強。", score: { 效能: 4, 便攜: 3, 創作: 5, 價格: 2 } },
@@ -16,6 +17,7 @@ const SERIES = [
 const SPECS = {
   titan:    { model: "Titan 18 HX Dragon Edition Draco Epic", lines: ["40 週年旗艦機種", "完整規格請見官網"] },
   raider:   { model: "Raider 16 Max HX", lines: ["Ryzen 9 9955HX3D(16 核 32 緒)", "RTX 5090 Laptop GPU 175W", "整機功耗最高約 300W"] },
+  stealth:  { model: "Stealth 16 AI+", lines: ["完整規格請見官網"] },
   vector:   { model: "", lines: [] },
   katana:   { model: "Katana 17.3 吋(2026 春季更新)", lines: ["17.3 吋 WQHD 螢幕", "Core i7-14650HX", "RTX 5070 / 5060 / 5050 可選"] },
   cyborg:   { model: "Cyborg 15(2026 重新設計)", lines: ["入門電競外型改版", "完整規格請見官網"] },
