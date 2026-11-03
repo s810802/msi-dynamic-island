@@ -15,7 +15,7 @@ if (!KEY) { try { KEY = localStorage.getItem("owm-key") || ""; } catch { /* ç•¥é
 let cache = {};
 try { cache = JSON.parse(localStorage.getItem(CACHE_KEY) || "{}"); } catch { cache = {}; }
 
-async function owm(kind, city) {
+export async function owm(kind, city) {
   const id = `${kind}:${city.id}`, hit = cache[id];
   if (hit && Date.now() - hit.t < TTL) return hit.d;
   let res;
@@ -52,11 +52,11 @@ const SKY = {
   snow: { day: ["#8fa7c4", "#eef4fb"], night: ["#1a2540", "#596f94"] }, fog: { day: ["#98a6b4", "#e6ebef"], night: ["#232c38", "#566474"] },
 };
 
-function drawCloud(c, x, y, s, fill = "#fff") {
+export function drawCloud(c, x, y, s, fill = "#fff") {
   c.fillStyle = fill; c.beginPath();
   c.arc(x, y, 22 * s, 0, 7); c.arc(x + 26 * s, y - 12 * s, 28 * s, 0, 7); c.arc(x + 56 * s, y, 22 * s, 0, 7); c.rect(x, y, 56 * s, 22 * s); c.fill();
 }
-function drawIcon(c, kind, night, x, y, s) {
+export function drawIcon(c, kind, night, x, y, s) {
   c.save(); c.translate(x, y); c.scale(s, s);
   const sun = () => { c.fillStyle = "#ffd54a"; c.beginPath(); c.arc(0, 0, 24, 0, 7); c.fill(); c.strokeStyle = "#ffd54a"; c.lineWidth = 5; c.lineCap = "round"; for (let i = 0; i < 8; i++) { const a = i * Math.PI / 4; c.beginPath(); c.moveTo(Math.cos(a) * 33, Math.sin(a) * 33); c.lineTo(Math.cos(a) * 43, Math.sin(a) * 43); c.stroke(); } };
   const moon = () => { c.fillStyle = "#f3f1d6"; c.beginPath(); c.arc(0, 0, 26, 0, 7); c.fill(); c.globalCompositeOperation = "destination-out"; c.beginPath(); c.arc(12, -8, 22, 0, 7); c.fill(); c.globalCompositeOperation = "source-over"; };
