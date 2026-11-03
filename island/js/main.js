@@ -267,6 +267,8 @@ for (const b of BRIDGES) for (const t of [0.25, 0.75]) {  // 橋頭兩側各一�
   lamp.position.set(p.x, p.y + 0.02, p.z + 0.7); world.add(lamp); lamps.push(lamp);
 }
 
+guardian.dressLights(glowTexture);
+
 /* 天空 */
 const sky = createSky(THREE, mats);
 world.add(sky.group);
@@ -538,6 +540,7 @@ function applyNight(f) {
   fill.intensity = (dark ? 0.5 : 0.65) * (1 - 0.5 * f);
   mats.glow.emissiveIntensity = 0.12 + 2.3 * f;
   for (const l of lamps) l.userData.sprite.material.opacity = 0.9 * f;
+  guardian.setNight(f);
 }
 function applyTheme(theme, over = {}) {
   current = theme; currentCustom = { ...over };

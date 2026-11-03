@@ -237,6 +237,7 @@ export function createGuardian(THREE, m) {
   for (let i = 0; i < 14; i++) {
     const c = new THREE.Mesh(new THREE.ConeGeometry(0.28, 0.8, 6), m.primary);
     c.castShadow = true; root.add(c); spines.push(c);
+    const lantern = new THREE.Mesh(new THREE.SphereGeometry(0.17, 8, 6), m.glow); lantern.position.y = 0.52; c.add(lantern);
   }
   const head = new THREE.Group();
   const hp = (geo, mat, x, y, z, rx = 0, ry = 0, rz = 0) => {
@@ -248,6 +249,7 @@ export function createGuardian(THREE, m) {
   for (const sz of [-1, 1]) {
     hp(new THREE.SphereGeometry(0.2, 8, 6), m.white, 0.5, 0.3, sz * 0.62);
     hp(new THREE.SphereGeometry(0.11, 8, 6), m.dark, 0.64, 0.3, sz * 0.7);
+    hp(new THREE.SphereGeometry(0.075, 8, 6), m.glow, 0.72, 0.3, sz * 0.74);
     hp(new THREE.ConeGeometry(0.2, 1.0, 6), m.accent, -0.45, 0.8, sz * 0.45, 0, 0, rad(55));
     hp(new THREE.ConeGeometry(0.18, 0.7, 5), m.primary, -0.1, 0.1, sz * 0.95, rad(sz * 80), 0, rad(90));
     hp(new THREE.CylinderGeometry(0.03, 0.03, 1.5, 4), m.accent, 1.5, -0.35, sz * 0.5, 0, 0, rad(75));
@@ -310,5 +312,17 @@ export function createGuardian(THREE, m) {
     root.updateMatrixWorld(true);
     return root.localToWorld(out.copy(seatLocal));
   }
-  return { root, update, nod: () => { nod = 1; }, head, seat };
+  // 夜晚點燈:每個燈籠與頭部加上柔和的光暈(光暈貼圖由 main.js 傳入)
+  const halos = [];
+  function dressLights(tex) {
+    const mk = (parent, y, size) => {
+      const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, color: "#ffd27a", transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending }));
+      sp.scale.setScalar(size); sp.position.y = y; parent.add(sp); halos.push(sp);
+    };
+    spines.forEach(c => mk(c, 0.52, 1.7));
+    const h = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, color: "#ffe9a8", transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending }));
+    h.scale.setScalar(4.2); head.add(h); halos.push(h);
+  }
+  function setNight(f) { halos.forEach(h => { h.material.opacity = 0.85 * f; }); }
+  return { root, update, nod: () => { nod = 1; }, head, seat, dressLights, setNight };
 }
