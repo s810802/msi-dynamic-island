@@ -142,6 +142,10 @@ GROUPS.forEach((g, i) => {
 });
 cardsBox.innerHTML = SERIES.map(s => `
   <article class="card" data-id="${s.id}" data-group="${s.group}">
+    <div class="thumb">
+      <svg viewBox="0 0 120 80" aria-hidden="true"><rect x="22" y="8" width="76" height="48" rx="4" fill="#cfd4dc"/><path d="M8 62h104l-6 8H14z" fill="#b3b9c4"/></svg>
+      <img src="images/${s.id}.jpg" alt="MSI ${s.name} 筆電" loading="lazy" onerror="this.remove()">
+    </div>
     <span class="tag">${s.group}</span>
     <h3>${s.name}</h3>
     <p>${s.desc}</p>
