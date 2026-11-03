@@ -9,7 +9,9 @@ import { makeMaterials, buildLandmark, buildTree, buildResident, createGuardian,
 import { createSky } from "./sky.js";
 import { createMusic } from "./music.js";
 import { createWallBoard } from "./wallboard.js";
+import { createYouBikeBoard } from "./youbikeboard.js";
 import { makeGait, stepGait } from "./gait.js";
+import { createMeteors } from "./meteors.js";
 
 const $ = (s, el = document) => el.querySelector(s);
 const $$ = (s, el = document) => [...el.querySelectorAll(s)];
@@ -507,11 +509,47 @@ const wallboard = createWallBoard(THREE, mats);
     if (Math.hypot(t.position.x - wx, t.position.z - wz) < 4.2) { world.remove(t); trees.splice(i, 1); }
   }
 }
-function openWeather() {
+wallboard.group.userData.embed = "../weather/?embed=1"; wallboard.group.userData.title = "台灣天氣牆";
+function openEmbed(url, title) {
   lastFocus = document.activeElement;
-  if (!wxFrame.src) wxFrame.src = "../weather/?embed=1";
+  if (wxFrame.dataset.url !== url) { wxFrame.src = url; wxFrame.dataset.url = url; }
+  $("#wxTitle").textContent = title; $("#wxNew").href = url.replace("?embed=1", "");
   wxOverlay.hidden = false; document.body.classList.add("panel-open");
   $("#wxClose").focus();
+}
+const openWeather = () => openEmbed("../weather/?embed=1", "台灣天氣牆");
+const openYouBike = () => openEmbed("../youbike/?embed=1", "YouBike 2.0 即時查詢");
+
+/* YouBike 看板:放在日常島,自動找一塊不擋路的空地 */
+const ybBoard = createYouBikeBoard(THREE, mats);
+{
+  const rot = 0.56, dirW = [Math.cos(rot), -Math.sin(rot)], dirD = [Math.sin(rot), Math.cos(rot)];
+  const isl = terrains.daily, o = WORLD.daily.outline, xs = o.map(p => p[0]), zs = o.map(p => p[1]);
+  const prefer = [-24.2, -0.8];
+  let best = null;
+  for (const sc of [0.85, 0.7, 0.58, 0.48]) {
+    for (let x = Math.min(...xs); x <= Math.max(...xs); x += 0.5) for (let z = Math.min(...zs); z <= Math.max(...zs); z += 0.5) {
+      const pts = [];
+      for (const u of [-0.5, -0.25, 0, 0.25, 0.5]) for (const v of [-0.5, 0, 0.5]) pts.push([x + dirW[0] * u * 8.0 * sc * 1.1 + dirD[0] * v * 1.8, z + dirW[1] * u * 8.0 * sc * 1.1 + dirD[1] * v * 1.8]);
+      const okLand = pts.every(([px, pz]) => isl.contains(px, pz) && [[0.4, 0], [-0.4, 0], [0, 0.4], [0, -0.4]].every(([dx, dz]) => isl.contains(px + dx, pz + dz)));
+      if (!okLand) continue;
+      if (pts.some(([px, pz]) => lmList.some(p => Math.hypot(p[0] - px, p[2] - pz) < 1.9))) continue;
+      if (pts.some(([px, pz]) => routePts.some(r => Math.hypot(r.x - px, r.z - pz) < 0.7))) continue;
+      const d = Math.hypot(x - prefer[0], z - prefer[1]);
+      if (!best || d < best.d) best = { x, z, d, sc };
+    }
+    if (best) break;
+  }
+  if (best) {
+    const y = isl.surfaceAt(best.x, best.z) ?? 1.2;
+    ybBoard.group.position.set(best.x, y, best.z); ybBoard.group.rotation.y = rot; ybBoard.group.scale.setScalar(best.sc);
+    world.add(ybBoard.group);
+    for (let i = trees.length - 1; i >= 0; i--) {
+      const t = trees[i];
+      if (Math.hypot(t.position.x - best.x, t.position.z - best.z) < 4.4 * best.sc) { world.remove(t); trees.splice(i, 1); }
+    }
+    ybBoard.spot = best;
+  } else console.warn("找不到放 YouBike 看板的空地");
 }
 function closeWeather() { wxOverlay.hidden = true; document.body.classList.remove("panel-open"); lastFocus?.focus?.(); }
 $("#wxClose").addEventListener("click", closeWeather);
@@ -668,6 +706,10 @@ const wallChip = document.createElement("button");
 wallChip.className = "chip chip-guide"; wallChip.textContent = "天氣牆看板"; wallChip.addEventListener("click", openWeather);
 labelBox.appendChild(wallChip);
 labels.push({ el: wallChip, anchor: new THREE.Vector3(21, 7.6, -5) });
+const ybChip = document.createElement("button");
+ybChip.className = "chip chip-guide"; ybChip.textContent = "YouBike 看板"; ybChip.addEventListener("click", openYouBike);
+labelBox.appendChild(ybChip);
+labels.push({ el: ybChip, anchor: new THREE.Vector3((ybBoard.spot?.x ?? -24) , 7.4 * (ybBoard.spot?.sc ?? 1), (ybBoard.spot?.z ?? -1) - 1) });
 const guideAnchor = new THREE.Vector3(GUARDIAN_POS[0] + 6, 4, GUARDIAN_POS[2] - 1);
 labels.push({ el: gl, anchor: guideAnchor });
 function placeLabels() {
@@ -691,6 +733,9 @@ ISLANDS.forEach(i => {
 const wl2 = document.createElement("li");
 wl2.innerHTML = `<button>天氣牆看板<small>22 縣市一次看</small></button>`;
 wl2.firstChild.addEventListener("click", openWeather); places.appendChild(wl2);
+const wl3 = document.createElement("li");
+wl3.innerHTML = `<button>YouBike 看板<small>即時查詢剩幾台</small></button>`;
+wl3.firstChild.addEventListener("click", openYouBike); places.appendChild(wl3);
 const lg = document.createElement("li");
 lg.innerHTML = `<button>海龍嚮導<small>守護入口海域的巨龍</small></button>`;
 lg.firstChild.addEventListener("click", openGuide); places.appendChild(lg);
@@ -702,11 +747,11 @@ function pick(ev) {
   const r = canvas.getBoundingClientRect();
   ptr.set(((ev.clientX - r.left) / r.width) * 2 - 1, -((ev.clientY - r.top) / r.height) * 2 + 1);
   ray.setFromCamera(ptr, camera);
-  const hit = ray.intersectObjects([...landmarkList, guardian.root, wallboard.group], true)[0];
+  const hit = ray.intersectObjects([...landmarkList, guardian.root, wallboard.group, ybBoard.group], true)[0];
   if (!hit) return null;
   let o = hit.object;
   while (o && !o.userData.seriesId && !o.userData.guardian && !o.userData.billboard) o = o.parent;
-  return o ? (o.userData.guardian ? { guardian: true } : o.userData.billboard ? { billboard: true, label: o.userData.label } : { series: o.userData.seriesId }) : null;
+  return o ? (o.userData.guardian ? { guardian: true } : o.userData.billboard ? { billboard: true, label: o.userData.label, embed: o.userData.embed, title: o.userData.title } : { series: o.userData.seriesId }) : null;
 }
 let down = null;
 canvas.addEventListener("pointerdown", e => { down = { x: e.clientX, y: e.clientY }; });
@@ -716,7 +761,7 @@ canvas.addEventListener("pointerup", e => {
   const hit = pick(e);
   if (!hit) return;
   if (hit.guardian) return openGuide();
-  if (hit.billboard) return openWeather();
+  if (hit.billboard) return openEmbed(hit.embed, hit.title);
   const isl = ISLANDS.find(i => i.series.includes(hit.series));
   openIsland(isl.id, hit.series);
 });
@@ -825,6 +870,13 @@ btnMusic.addEventListener("click", async () => {
 });
 syncMusic();
 
+/* 流星雨:夜晚不定時出現 */
+let toastTimer = 0;
+const meteors = createMeteors($("#fx"), () => {
+  const t = $("#toast"); t.textContent = "🌠 流星雨來了!快許個願"; t.hidden = false;
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.hidden = true; }, 4200);
+});
+
 /* ---------- 主迴圈 ---------- */
 let sim = 0, last = performance.now();
 function frame(now) {
@@ -843,6 +895,7 @@ function frame(now) {
   { const target = targetNight(currentHour()); nightF += (target - nightF) * Math.min(1, dt * 1.5);
     if (Math.abs(nightF - target) < 0.004) nightF = target;
     if (Math.abs(nightF - appliedNight) > 0.004) applyNight(nightF); }
+  meteors.update(dt, nightF, paused);
   if (tween) {
     const k = Math.min(1, (now - tween.t0) / 800), e = 1 - Math.pow(1 - k, 3);
     controls.target.lerpVectors(tween.startT, tween.target, e);
@@ -853,10 +906,11 @@ function frame(now) {
   controls.update();
   renderer.render(scene, camera);
   wallboard.update(now / 1000, nightF);
+  ybBoard.update(now / 1000, nightF);
   guideAnchor.set(guardian.root.position.x + 3, 5, guardian.root.position.z + 1);
   placeLabels();
   requestAnimationFrame(frame);
 }
 resize();
 requestAnimationFrame(frame);
-window.__island = { wallboard, ferry, people, HARBORS, updateFerry, updatePeople, stepResident, stepRoamer, roamers, sky, ducks, lamps, mats, setTimeMode: m => { timeMode = m; }, nightFactor: () => nightF, scene, camera, controls, residents, edges, terrains, guardian, THEMES, applyTheme, openIsland };
+window.__island = { ybBoard, meteors, wallboard, ferry, people, HARBORS, updateFerry, updatePeople, stepResident, stepRoamer, roamers, sky, ducks, lamps, mats, setTimeMode: m => { timeMode = m; }, nightFactor: () => nightF, scene, camera, controls, residents, edges, terrains, guardian, THEMES, applyTheme, openIsland };

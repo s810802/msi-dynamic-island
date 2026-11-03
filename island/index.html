@@ -13,6 +13,8 @@
 </head>
 <body>
   <canvas id="scene" aria-label="MSI 產品島 3D 場景"></canvas>
+  <canvas id="fx" aria-hidden="true"></canvas>
+  <div id="toast" role="status" hidden></div>
   <div id="labels" aria-hidden="false"></div>
   <div id="tip" hidden></div>
 
@@ -48,8 +50,8 @@
   <!-- 天氣顯示器放大:在小島上直接開啟真正的天氣牆 -->
   <div id="wxOverlay" class="overlay" hidden>
     <section class="sheet wxsheet" role="dialog" aria-modal="true" aria-label="台灣天氣牆">
-      <header><h2>台灣天氣牆</h2><span class="wx-actions"><a href="../weather/" target="_blank" rel="noopener">在新分頁開啟 ↗</a><button id="wxClose" aria-label="關閉">✕</button></span></header>
-      <iframe id="wxFrame" title="台灣天氣牆" loading="lazy"></iframe>
+      <header><h2 id="wxTitle">台灣天氣牆</h2><span class="wx-actions"><a id="wxNew" href="../weather/" target="_blank" rel="noopener">在新分頁開啟 ↗</a><button id="wxClose" aria-label="關閉">✕</button></span></header>
+      <iframe id="wxFrame" title="內嵌查詢頁面" loading="lazy"></iframe>
     </section>
   </div>
 
