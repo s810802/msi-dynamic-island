@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MSI 微星筆電 行銷動態島</title>
+  <meta name="description" content="MSI 微星筆電全產品線導覽:電競、創作者、商務、日常,一個動態島帶你找到適合的筆電。">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- ============ 動態島 ============ -->
+  <div class="island-wrap">
+    <div class="island" id="island" data-mode="idle" role="navigation" aria-label="動態島導覽">
+
+      <!-- 收合狀態 -->
+      <button class="island-idle" id="islandIdle" aria-label="展開選單">
+        <span class="dot"></span>
+        <span class="idle-brand">MSI</span>
+        <span class="idle-section" id="idleSection">首頁</span>
+        <span class="idle-chevron">▾</span>
+      </button>
+
+      <!-- 展開:選單 / 系列 / 比較 / 通知 -->
+      <div class="island-panel" id="islandPanel">
+        <div class="tabs" role="tablist">
+          <button class="tab is-active" data-tab="nav" role="tab">導覽</button>
+          <button class="tab" data-tab="series" role="tab">系列</button>
+          <button class="tab" data-tab="compare" role="tab">比較</button>
+          <button class="tab-close" id="islandClose" aria-label="收合">✕</button>
+        </div>
+
+        <div class="pane is-active" data-pane="nav">
+          <a href="#home" class="nav-link">首頁</a>
+          <a href="#series" class="nav-link">產品系列</a>
+          <a href="#finder" class="nav-link">幫我選</a>
+          <a href="#features" class="nav-link">核心技術</a>
+          <a href="#contact" class="nav-link">聯絡</a>
+        </div>
+
+        <div class="pane" data-pane="series">
+          <div class="chips" id="islandChips"></div>
+          <p class="mini-desc" id="islandSeriesDesc"></p>
+          <a href="#series" class="mini-go" id="islandSeriesGo">看這個系列 →</a>
+        </div>
+
+        <div class="pane" data-pane="compare">
+          <div class="cmp-pick">
+            <select id="cmpA" aria-label="系列 A"></select>
+            <span>vs</span>
+            <select id="cmpB" aria-label="系列 B"></select>
+          </div>
+          <div id="cmpBars" class="cmp-bars"></div>
+        </div>
+      </div>
+
+      <!-- 通知 -->
+      <div class="island-notice" id="islandNotice">
+        <span class="notice-icon">🔔</span>
+        <span class="notice-text" id="noticeText"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ 首頁 Hero ============ -->
+  <header class="hero section" id="home" data-name="首頁">
+    <div class="hero-text">
+      <p class="eyebrow">MSI 微星科技</p>
+      <h1>每一種玩法,<br>都有一台 <em>對的筆電</em></h1>
+      <p class="lead">從電競、創作到商務,MSI 全產品線一次看懂。點上方的動態島,隨時切換、比較、快速跳轉。</p>
+      <div class="hero-actions">
+        <a class="btn btn-primary" href="#finder">3 題幫我選</a>
+        <a class="btn btn-ghost" href="#series">瀏覽全系列</a>
+      </div>
+    </div>
+    <div class="hero-visual">
+      <!-- 純 SVG 筆電。之後可換成 images/hero-laptop.png -->
+      <svg viewBox="0 0 400 260" class="laptop-svg" role="img" aria-label="筆電示意圖">
+        <defs>
+          <linearGradient id="scr" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#1a1d24"/><stop offset="1" stop-color="#e60012"/>
+          </linearGradient>
+        </defs>
+        <rect x="60" y="20" width="280" height="175" rx="12" fill="#2b2f38"/>
+        <rect x="70" y="30" width="260" height="155" rx="6" fill="url(#scr)"/>
+        <path d="M150 140 L200 70 L250 140 L225 140 L200 105 L175 140Z" fill="#fff" opacity=".9"/>
+        <path d="M20 205 H380 L360 228 Q358 232 352 232 H48 Q42 232 40 228Z" fill="#c9ced6"/>
+        <rect x="165" y="205" width="70" height="6" rx="3" fill="#9aa1ad"/>
+      </svg>
+    </div>
+  </header>
+
+  <main>
+    <!-- ============ 產品系列 ============ -->
+    <section class="section" id="series" data-name="產品系列">
+      <h2>產品系列</h2>
+      <p class="section-sub">點選分類篩選;也可以從動態島的「系列」分頁切換。</p>
+      <div class="filter" id="filter"></div>
+      <div class="cards" id="cards"></div>
+    </section>
+
+    <!-- ============ 幫我選 ============ -->
+    <section class="section alt" id="finder" data-name="幫我選">
+      <h2>3 題幫我選</h2>
+      <div class="quiz" id="quiz"></div>
+    </section>
+
+    <!-- ============ 核心技術 ============ -->
+    <section class="section" id="features" data-name="核心技術">
+      <h2>核心技術</h2>
+      <div class="features">
+        <article class="feature">
+          <div class="f-icon">❄️</div>
+          <h3>Cooler Boost 散熱</h3>
+          <p>多風扇與多熱管設計,讓高負載下也能維持穩定效能。</p>
+        </article>
+        <article class="feature">
+          <div class="f-icon">⚡</div>
+          <h3>MSI Center</h3>
+          <p>一個軟體切換效能模式、監控溫度、調整風扇。</p>
+        </article>
+        <article class="feature">
+          <div class="f-icon">🖥️</div>
+          <h3>高更新率螢幕</h3>
+          <p>電競款提供高更新率面板,創作款則強調色彩準確度。</p>
+        </article>
+        <article class="feature">
+          <div class="f-icon">🎹</div>
+          <h3>SteelSeries 鍵盤</h3>
+          <p>部分機種搭載 RGB 背光鍵盤,打字與遊戲手感兼顧。</p>
+        </article>
+      </div>
+      <p class="note">※ 實際規格依機種而異,請以 MSI 官方網站為準。</p>
+    </section>
+
+    <!-- ============ 聯絡 ============ -->
+    <section class="section alt" id="contact" data-name="聯絡">
+      <h2>想了解更多?</h2>
+      <p class="section-sub">前往 MSI 官方網站查看最新機種與規格。</p>
+      <a class="btn btn-primary" href="https://tw.msi.com/" target="_blank" rel="noopener">前往 MSI 台灣官網</a>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>本頁為學習練習用的行銷網站範例,非 MSI 官方網站。MSI 與微星為其所屬公司之商標。</p>
+  </footer>
+
+  <script src="js/main.js"></script>
+</body>
+</html>
