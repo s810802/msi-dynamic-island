@@ -134,6 +134,7 @@ h1 em { font-style: normal; color: var(--red); }
 .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,.12); }
 .btn-primary { background: var(--red); color: #fff; }
 .btn-ghost { border-color: var(--text); }
+.btn-island { background: var(--text); color: #fff; }
 .laptop-svg { width: 100%; filter: drop-shadow(0 30px 30px rgba(0,0,0,.18)); animation: float 5s ease-in-out infinite; }
 @keyframes float { 50% { transform: translateY(-10px); } }
 
